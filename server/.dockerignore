@@ -1,0 +1,34 @@
+.DS_Store
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.git
+/dist
+.gitignore
+docker.sh
+Dockerfile
+Dockerfile.multi
+README.md
+
+# go
+/tmp
+test.go
+dump.rdb
+/certs
+.air.toml
