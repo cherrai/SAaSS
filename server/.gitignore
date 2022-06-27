@@ -33,5 +33,5 @@ main
 /certs
 dump.rdb
 
-/static
+/static/
 /protos/*.go
