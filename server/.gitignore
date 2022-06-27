@@ -35,4 +35,4 @@ dump.rdb
 
 /static/
 /protos/*.go
-/protos/coding.go
+!/protos/coding.go
