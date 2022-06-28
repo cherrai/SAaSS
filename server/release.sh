@@ -45,6 +45,7 @@ stop() {
 proto() {
   echo "-> 准备编译Protobuf"
   cd ./protos && protoc --go_out=. *.proto
+  
   echo "-> 编译Protobuf成功"
 }
 
