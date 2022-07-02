@@ -7,13 +7,10 @@ import (
 	conf "github.com/cherrai/SAaSS/config"
 	mongodb "github.com/cherrai/SAaSS/db/mongo"
 	redisdb "github.com/cherrai/SAaSS/db/redis"
-	"github.com/cherrai/SAaSS/services/encryption"
-	"github.com/cherrai/SAaSS/services/methods"
-	"github.com/cherrai/SAaSS/services/socketio_service"
+	"github.com/cherrai/SAaSS/services/gin_service"
 
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nredis"
-	sso "github.com/cherrai/saki-sso-go"
 
 	// sfu "github.com/pion/ion-sfu/pkg/sfu"
 
@@ -44,7 +41,6 @@ func main() {
 			if os.Args[k+1] != "" {
 				configPath = os.Args[k+1]
 			}
-			break
 
 		}
 	}
@@ -71,27 +67,7 @@ func main() {
 
 	// Connect to mongodb.
 	mongodb.ConnectMongoDB(conf.Config.Mongodb.Currentdb.Uri, conf.Config.Mongodb.Currentdb.Name)
-	mongodb.ConnectMongoDB(conf.Config.Mongodb.Ssodb.Uri, conf.Config.Mongodb.Ssodb.Name)
-	// SSO Init
-	conf.SSO = sso.New(&sso.SakiSsoOptions{
-		AppId:  conf.Config.SSO.AppId,
-		AppKey: conf.Config.SSO.AppKey,
-		Host:   conf.Config.SSO.Host,
-		RedisOptions: &redis.Options{
-			Addr:     conf.Config.Redis.Addr,
-			Password: conf.Config.Redis.Password,
-			DB:       conf.Config.Redis.DB,
-		},
-	})
-	// Test()
-	conf.EncryptionClient = encryption.New(encryption.NewOption{
-		RedisClient:     redisdb.Rdb,
-		RsaKeyDelayDays: 10,
-		UserAesKeyMins:  10,
-		TempDataMins:    1,
-	})
 
-	methods.DeleteFile()
-	socketio_service.Init()
+	gin_service.Init()
 
 }

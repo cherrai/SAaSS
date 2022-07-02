@@ -16,8 +16,9 @@ var (
 )
 
 var (
-	AppList  = map[string]typings.AppListItem{}
-	ServerId = ""
+	AppList   = map[string]typings.AppListItem{}
+	ServerId  = ""
+	configDir = "./conf.json"
 )
 
 func Init() {
@@ -28,7 +29,7 @@ func Init() {
 }
 
 func readFile() {
-	jsonFile, _ := os.Open("./config.serverConfig.json")
+	jsonFile, _ := os.Open(configDir)
 	defer jsonFile.Close()
 	decoder := json.NewDecoder(jsonFile)
 
@@ -59,7 +60,6 @@ func CreateServerId() {
 }
 
 func CreateApp() {
-
 	for _, v := range Config.AppList {
 		isExists := false
 		for _, sv := range AppList {
@@ -82,8 +82,7 @@ func CreateApp() {
 }
 
 func writeFile() {
-	serverConfig, serverConfigErr := os.Create("./config.serverConfig.json")
-	defer serverConfig.Close()
+	serverConfig, serverConfigErr := os.Create(configDir)
 	if serverConfigErr != nil {
 		panic(serverConfigErr)
 	} else {
@@ -97,4 +96,5 @@ func writeFile() {
 			panic(serverConfigWriteErr)
 		}
 	}
+	defer serverConfig.Close()
 }

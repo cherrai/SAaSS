@@ -27,6 +27,7 @@ pnpm-debug.log*
 *.sw?
 
 config*.json
+conf.json
 tmp
 test.go
 main

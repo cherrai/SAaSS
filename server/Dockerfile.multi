@@ -33,17 +33,17 @@ RUN \
 COPY . . 
 
 RUN \
-  go build -o meow-whisper main.go
+  go build -o saass main.go
 
 FROM alpine:3.10
 
 WORKDIR /app
 
 COPY --from=BUILD_IMAGE \
-  /app/meow-whisper \
+  /app/saass \
   /app/config.pro.json \
   /app/
 
-EXPOSE 15301
+EXPOSE 16100
 
-CMD ["./meow-whisper","--config","config.pro.json"]
+CMD ["./saass","--config","config.pro.json"]

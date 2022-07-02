@@ -1,6 +1,6 @@
 #! /bin/sh
-name="meow-whisper-web-server"
-port=15301
+name="SAaSS"
+port=16100
 branch="main"
 allowMethods=("stop gitpull proto dockerremove start dockerlogs")
 
@@ -18,7 +18,7 @@ dockerremove() {
 
 start() {
   echo "-> 正在启动「${name}」服务"
-  gitpull
+  # gitpull
   dockerremove
 
   echo "-> 正在准备相关资源"

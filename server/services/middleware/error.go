@@ -28,19 +28,15 @@ func Error() gin.HandlerFunc {
 					_, fn, line, _ := runtime.Caller(i)
 					fmt.Println("file:", fn, "line:", line)
 				}
-				var res response.ResponseProtobufType
+				var res response.ResponseType
 				res.Code = 10001
 				switch reflect.TypeOf(err).String() {
 				case "string":
 					res.Error = err.(string)
-					break
 				case "*errors.errorString":
 					res.Error = err.(error).Error()
-					break
 				case "runtime.errorString":
 					res.Error = err.(error).Error()
-					break
-
 				}
 				res.Call(c)
 				c.Abort()

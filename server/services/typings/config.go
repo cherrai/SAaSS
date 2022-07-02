@@ -9,10 +9,8 @@ type Config struct {
 	Server           Server
 	AppList          []AppListItem
 	StaticPathDomain string
-	SSO              Sso
 	Redis            Redis
 	Mongodb          Mongodb
-	StaticUrlPrefix  string
 }
 
 type AppListItem struct {
@@ -29,11 +27,6 @@ type Server struct {
 	// mode: release debug
 	Mode string
 }
-type Sso struct {
-	AppId  string
-	AppKey string
-	Host   string
-}
 type Redis struct {
 	Addr     string
 	Password string
@@ -41,10 +34,6 @@ type Redis struct {
 }
 type Mongodb struct {
 	Currentdb struct {
-		Name string
-		Uri  string
-	}
-	Ssodb struct {
 		Name string
 		Uri  string
 	}

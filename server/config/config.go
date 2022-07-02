@@ -7,13 +7,10 @@ import (
 	"time"
 
 	"github.com/cherrai/SAaSS/services/typings"
-
-	sso "github.com/cherrai/saki-sso-go"
 )
 
 var (
 	Config        *typings.Config
-	SSO           *sso.SakiSSO
 	FileTokenSign = "saass_2022_6_4"
 	// 文件到期后根据时间进行删除 未做
 	// []string{"Image", "Video", "Audio", "Text", "File"}

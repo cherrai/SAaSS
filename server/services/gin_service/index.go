@@ -11,15 +11,16 @@ import (
 
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/gin-gonic/gin"
-	socketio "github.com/googollee/go-socket.io"
 )
 
 var log = nlog.New()
 
 var Router *gin.Engine
-var SocketIoServer *socketio.Server
 
 func Init() {
+	gin.SetMode(conf.Config.Server.Mode)
+
+	Router = gin.New()
 	InitRouter()
 	run()
 }
@@ -42,7 +43,6 @@ func InitRouter() {
 	// Router.Use(middleware.Encryption())
 	Router.Use(middleware.CheckApp())
 	Router.Use(middleware.Authorize())
-	Router.GET("/socket.io/*any", gin.WrapH(SocketIoServer))
 
 	// 测试上传
 	// Router.POST("/testupload", func(c *gin.Context) {
@@ -71,7 +71,6 @@ func InitRouter() {
 	// 	c.File("./static/1589036065311.jpeg")
 	// })
 	Router.StaticFS("/static", http.Dir("./static"))
-	Router.POST("/socket.io/*any", gin.WrapH(SocketIoServer))
 
 	// midArr := [...]gin.HandlerFunc{GinMiddleware("*"), middleware.Authorize()}
 	// fmt.Println(midArr)

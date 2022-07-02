@@ -3,8 +3,8 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  bin = "./tmp/main.exe --config config.lan.json"
-  cmd = "go build -o ./tmp/main.exe ."
+  bin = "./tmp/main --config config.linux.json"
+  cmd = "go build -o ./tmp/main ."
   delay = 2000
   exclude_dir = ["assets","static", "tmp", "vendor", "testdata"]
   exclude_file = []
