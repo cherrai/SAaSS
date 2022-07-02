@@ -31,12 +31,10 @@ func CheckApp() gin.HandlerFunc {
 			case "GET":
 				appId = c.Query("appId")
 				appKey = c.Query("appKey")
-				break
 
 			case "POST":
 				appId = c.PostForm("appId")
 				appKey = c.PostForm("appKey")
-				break
 			default:
 				break
 			}

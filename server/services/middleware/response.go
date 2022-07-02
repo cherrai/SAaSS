@@ -21,12 +21,13 @@ func Response() gin.HandlerFunc {
 
 		if isRoles {
 			roles = getRoles.(*RoleOptionsType)
-		} else {
-			// res := response.ResponseType{}
-			// res.Code = 10013
-			// c.JSON(http.StatusOK, res.GetResponse())
-			// return
 		}
+		//  else {
+		// 	// res := response.ResponseType{}
+		// 	// res.Code = 10013
+		// 	// c.JSON(http.StatusOK, res.GetResponse())
+		// 	// return
+		// }
 		if isRoles && roles.isHttpServer {
 			defer func() {
 				roles := c.MustGet("roles").(*RoleOptionsType)
@@ -35,13 +36,12 @@ func Response() gin.HandlerFunc {
 					switch roles.ResponseDataType {
 
 					default:
-						if roles.ResponseEncryption == true {
+						if roles.ResponseEncryption {
 							// 当需要加密的时候
 						} else {
 							getResponse, _ := c.Get("body")
 							c.JSON(http.StatusOK, getResponse)
 						}
-						break
 					}
 				}
 			}()

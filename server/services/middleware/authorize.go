@@ -23,6 +23,7 @@ func Authorize() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+
 		res := response.ResponseType{}
 		res.Code = 10015
 
@@ -34,8 +35,7 @@ func Authorize() gin.HandlerFunc {
 
 		if roles.Authorize {
 			// 解析用户数据
-			var token string
-			token = c.Query("token")
+			token := c.Query("token")
 			configInfo, err := methods.ParseToken(token)
 			if err != nil {
 				res.Code = 10015

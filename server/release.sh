@@ -1,5 +1,5 @@
-#! /bin/sh
-name="SAaSS"
+#! /bin/bash
+name="saass"
 port=16100
 branch="main"
 allowMethods=("stop gitpull proto dockerremove start dockerlogs")
