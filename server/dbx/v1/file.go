@@ -100,6 +100,8 @@ func (fd *FileDbx) VisitFile(id primitive.ObjectID) error {
 		}, bson.M{
 			"$inc": bson.M{
 				"usage.visitCount": 1,
+			},
+			"$set": bson.M{
 				"lastDownloadTime": time.Now().Unix(),
 			},
 		}, options.Update().SetUpsert(false))
