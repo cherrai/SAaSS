@@ -18,6 +18,7 @@ import (
 
 var (
 	log = nlog.New()
+	a   = 1
 )
 
 func IsExists(path string) bool {
