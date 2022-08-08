@@ -8,9 +8,9 @@ import (
 )
 
 func InitRouter(r *gin.Engine) {
-	download := new(controllersV1.DownloadController)
+	fc := new(controllersV1.FileController)
 
-	r.GET("/s/*any", download.Download)
+	r.GET("/s/*any", fc.Download)
 	rv1 := routerV1.Routerv1{
 		Engine:  r,
 		BaseUrl: "/api/v1",

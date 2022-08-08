@@ -11,14 +11,18 @@ import (
 	"time"
 
 	conf "github.com/cherrai/SAaSS/config"
+	dbxV1 "github.com/cherrai/SAaSS/dbx/v1"
+	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/SAaSS/services/typings"
+	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/golang-jwt/jwt"
 )
 
 var (
-	log = nlog.New()
-	a   = 1
+	log     = nlog.New()
+	a       = 1
+	fileDbx = new(dbxV1.FileDbx)
 )
 
 func IsExists(path string) bool {
@@ -63,7 +67,7 @@ func GetToken(fileInfo typings.TempFileConfigInfo) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(conf.FileTokenSign))
+	tokenString, err := token.SignedString([]byte(conf.Config.FileTokenSign))
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +79,7 @@ func ParseToken(token string) (*typings.TempFileConfigInfo, error) {
 		if _, ok := tokenStr.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", tokenStr.Header["alg"])
 		}
-		return []byte(conf.FileTokenSign), nil
+		return []byte(conf.Config.FileTokenSign), nil
 	})
 	if err != nil {
 		return nil, err
@@ -91,15 +95,18 @@ func ParseToken(token string) (*typings.TempFileConfigInfo, error) {
 }
 
 // 合并文件
+// 后续 还是需要检测下是否有同样hash的文件存在
 func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err error) {
 
 	// log.Info("meger start")
+	// 后续 还是需要检测下是否有同样hash的文件存在
+	path, fileName := GetStaticFilePathAndFileName(fileConfigInfo.FileInfo.Hash, fileConfigInfo.FileInfo.Suffix)
 
-	if !IsExists(fileConfigInfo.StaticFolderPath) {
-		os.MkdirAll(fileConfigInfo.StaticFolderPath, os.ModePerm)
+	if !nfile.IsExists(path) {
+		os.MkdirAll(path, os.ModePerm)
 	}
 
-	filePath := fileConfigInfo.StaticFolderPath + fileConfigInfo.StaticFileName
+	filePath := path + "/" + fileName
 	complateFile, err := os.Create(filePath)
 
 	if err != nil {
@@ -123,7 +130,7 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 
 	// log.Info("filePath", filePath)
 
-	hash, err := GetHash(filePath)
+	hash, err := nfile.GetHash(filePath)
 	if err != nil {
 		log.Info(err)
 		code = 10016
@@ -135,6 +142,27 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 	// log.Info("size", complateFile.Size())
 
 	if fileConfigInfo.FileInfo.Hash != hash {
+		code = 10016
+		return
+	}
+
+	// 创建静态文件
+
+	staticFile := models.StaticFile{
+		FileName: fileName,
+		Path:     path,
+		FileInfo: models.FileInfo{
+			Name:         fileConfigInfo.FileInfo.Name,
+			Size:         fileConfigInfo.FileInfo.Size,
+			Type:         fileConfigInfo.FileInfo.Type,
+			Suffix:       fileConfigInfo.FileInfo.Suffix,
+			LastModified: fileConfigInfo.FileInfo.LastModified,
+			Hash:         fileConfigInfo.FileInfo.Hash,
+		},
+		Status: 1,
+	}
+	_, err = fileDbx.SaveStaticFile(&staticFile)
+	if err != nil {
 		code = 10016
 		return
 	}

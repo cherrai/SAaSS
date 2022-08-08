@@ -8,6 +8,7 @@ type ServerConfig struct {
 type Config struct {
 	Server           Server
 	AppList          []AppListItem
+	FileTokenSign    string
 	StaticPathDomain string
 	Redis            Redis
 	Mongodb          Mongodb

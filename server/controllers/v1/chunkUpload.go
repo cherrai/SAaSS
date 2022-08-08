@@ -18,6 +18,7 @@ import (
 	"github.com/cherrai/SAaSS/services/response"
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/cipher"
+	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nint"
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nstrings"
@@ -34,7 +35,7 @@ var fileDbx = new(dbxV1.FileDbx)
 type ChunkUploadController struct {
 }
 
-// 目前暂时仅支持PNG和JPG
+// 如果接着上次的传，则需要获取上次的上传进度
 func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// log.Info("------CreateChunk------")
 	var res response.ResponseType
@@ -42,7 +43,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 	appId := c.PostForm("appId")
 	// appKey := c.PostForm("appKey")
-	typestr := c.PostForm("type")
+	// typestr := c.PostForm("type")
 	fileName := c.PostForm("fileName")
 	fileInfoStr := c.PostForm("fileInfo")
 	fileInfo := c.PostFormMap("fileInfo")
@@ -70,18 +71,16 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		Name:           fileName,
 		EncryptionName: strings.ToLower(cipher.MD5(fileInfo["hash"] + appId + fileInfo["size"] + nstrings.ToString(time.Now().Unix()))),
 		Path:           c.PostForm("path"),
-		StaticFolderPath: strings.ToLower("./static/storage" +
-			"/" + (typestr) +
-			"/" + time.Now().Format("2006/01/02") +
-			"/"),
-		StaticFileName:      strings.ToLower(cipher.MD5(fileInfo["hash"]+fileInfo["size"]) + fileType),
+		// StaticFolderPath: strings.ToLower("./static/storage" +
+		// 	"/" + time.Now().Format("2006/01/02")),
+		// StaticFileName:      strings.ToLower(cipher.MD5(fileInfo["hash"]+fileInfo["size"]) + fileType),
 		TempFolderPath:      tempFolderPath,
 		TempChuckFolderPath: tempFolderPath + "/chuck/",
-		Type:                typestr,
-		ChunkSize:           nint.ToInt64(c.PostForm("chunkSize")),
-		CreateTime:          time.Now().Unix(),
-		ExpirationTime:      nint.ToInt64(c.PostForm("expirationTime")),
-		VisitCount:          nint.ToInt64(c.PostForm("visitCount")),
+		// Type:                typestr,
+		ChunkSize:      nint.ToInt64(c.PostForm("chunkSize")),
+		CreateTime:     time.Now().Unix(),
+		ExpirationTime: nint.ToInt64(c.PostForm("expirationTime")),
+		VisitCount:     nint.ToInt64(c.PostForm("visitCount")),
 
 		FileInfo: typings.FileInfo{
 			Name:         fileNameOnly,
@@ -100,7 +99,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		validation.Parameter(&fileConfigInfo.TempFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.TempChuckFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.ChunkSize, validation.Type("int64"), validation.Required(), validation.Enum([]int64{16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024, 1024 * 1024}), validation.GreaterEqual(1)),
-		validation.Parameter(&fileConfigInfo.Type, validation.Type("string"), validation.Required(), validation.Enum([]string{"Image", "Video", "Audio", "Text", "File"})),
+		// validation.Parameter(&fileConfigInfo.Type, validation.Type("string"), validation.Required(), validation.Enum([]string{"Image", "Video", "Audio", "Text", "File"})),
 	)
 	if err != nil {
 		res.Error = err.Error()
@@ -124,11 +123,19 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	}
 	// 通过检测StaticFileName看数据库文件是否存在
 
-	// 检测文件实际是否存在
-	// 本地文件实际存储时间为3个月
-	// 如果本地文件存在。且AppId或者云盘Path或者云盘文件名不一致，则添加新的进去
-	// 1、检查appId、path、fileName
-	// log.Info("fileConfigInfo", fileConfigInfo)
+	/**
+	1、判断该path和filename的File是否存在
+	1.1 存在则判断hash是否一致
+	不一致则重新上传，创建心的staticfile.并覆盖之前的hash
+	一致则查看hash所属的StaticFile是否还存在
+		1.1.1 存在则视为不用再上传了
+		不存在则需要上传
+
+
+	1.1 若File不存在则判断hash的StaticFile是否存在。存在则创建File。
+	不存在则重新上传
+
+	*/
 	file, err := fileDbx.GetFileWithFileInfo(fileConfigInfo.AppId, fileConfigInfo.Path, fileConfigInfo.Name)
 	log.Info("file", file)
 	if err != nil {
@@ -140,17 +147,35 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 	// 内容存在
 	staticFilesIsExist := false
-	if file != nil && file.StaticFileName != "" {
-		// 1、检测静态文件是否存在
-		// log.Info("是否存在", methods.IsExists(file.StaticFolderPath+file.StaticFileName))
-		if methods.IsExists(file.StaticFolderPath + file.StaticFileName) {
+
+	sf, err := fileDbx.GetStaticFileWithHash(fileConfigInfo.FileInfo.Hash)
+	if err != nil {
+		res.Error = err.Error()
+		res.Code = 10019
+		res.Call(c)
+		return
+	}
+	if sf != nil {
+		// 静态文件存在则直接更新即可
+		if nfile.IsExists(sf.Path + "/" + sf.FileName) {
 			staticFilesIsExist = true
+		}
+	}
+	if staticFilesIsExist {
+		// 内容存在则更新
+		if file != nil && file.Hash != "" {
 			// 更新内容到最新状态
+			if file.Hash != fileConfigInfo.FileInfo.Hash {
+				file.HashHistory = append(file.HashHistory, models.HashHistory{
+					Hash: file.Hash,
+				})
+				file.Hash = fileConfigInfo.FileInfo.Hash
+			}
 			file.Status = 1
 			file.DeleteTime = -1
+			file.DeadlineInRecycleBin = -1
 			file.AvailableRange.VisitCount = fileConfigInfo.VisitCount
 			file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
-
 			fileConfigInfo.EncryptionName = file.EncryptionName
 
 			_, err := fileDbx.UpdateFile(file)
@@ -167,90 +192,37 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			res.Call(c)
 			return
 		} else {
-			staticFilesIsExist = false
-		}
-	}
-
-	// 2、上面内容不存在，检查StaticFileName
-	// log.Info("2、上面内容不存在，检查StaticFileName")
-	if !staticFilesIsExist {
-		file, err := fileDbx.GetFileWithStaticFileName(fileConfigInfo.StaticFileName)
-		if err != nil {
-			res.Error = err.Error()
-			res.Code = 10019
-			res.Call(c)
-			return
-		}
-		// log.Info("file", file)
-		// 内容存在
-		// staticFilesIsExist := false
-		if file != nil && file.StaticFileName != "" {
-			// 1、检测静态文件是否存在
-			// log.Info(file.StaticFolderPath + file.StaticFileName)
-			// log.Info("methods.IsExists(file.StaticFolderPath + file.StaticFileName)", methods.IsExists(file.StaticFolderPath+file.StaticFileName))
-			if methods.IsExists(file.StaticFolderPath + file.StaticFileName) {
-				// appId 一样
-				log.Info(" file.AppId == fileConfigInfo.AppId && file.Status == 1", file.AppId == fileConfigInfo.AppId && file.Status == 1 && file.Path == fileConfigInfo.Path && file.FileName == fileConfigInfo.Name)
-				if file.AppId == fileConfigInfo.AppId && file.Status == 1 && file.Path == fileConfigInfo.Path && file.FileName == fileConfigInfo.Name {
-					// 更新内容到最新状态
-					file.Status = 1
-					file.DeleteTime = -1
-					file.AvailableRange.VisitCount = fileConfigInfo.VisitCount
-					file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
-					_, err := fileDbx.UpdateFile(file)
-					if err != nil {
-						res.Error = err.Error()
-						res.Code = 10019
-						res.Call(c)
-						return
-					}
-					res.Data = methods.GetResponseData(&fileConfigInfo)
-					res.Code = 200
-					res.Call(c)
-				} else {
-					// appId 不一样
-					file := models.File{
-						AppId:            fileConfigInfo.AppId,
-						EncryptionName:   fileConfigInfo.EncryptionName,
-						FileName:         fileConfigInfo.Name,
-						Path:             fileConfigInfo.Path,
-						Type:             fileConfigInfo.Type,
-						StaticFolderPath: file.StaticFolderPath,
-						StaticFileName:   file.StaticFileName,
-						AvailableRange: models.FileAvailableRange{
-							VisitCount:     fileConfigInfo.VisitCount,
-							ExpirationTime: fileConfigInfo.ExpirationTime,
-						},
-						FileInfo: models.FileInfo{
-							Name:         fileConfigInfo.FileInfo.Name,
-							Size:         fileConfigInfo.FileInfo.Size,
-							Type:         fileConfigInfo.FileInfo.Type,
-							Suffix:       fileConfigInfo.FileInfo.Suffix,
-							LastModified: fileConfigInfo.FileInfo.LastModified,
-							Hash:         fileConfigInfo.FileInfo.Hash,
-						},
-					}
-					_, err := fileDbx.SaveFile(&file)
-					if err != nil {
-						res.Code = 10016
-						res.Error = err.Error()
-						res.Call(c)
-						return
-					}
-					res.Data = map[string]interface{}{
-						"urls": methods.GetResponseData(&fileConfigInfo),
-					}
-					res.Code = 200
-					res.Call(c)
-				}
-
+			// 内容不存在则创建
+			// appId 不一样
+			file := models.File{
+				AppId:          fileConfigInfo.AppId,
+				EncryptionName: fileConfigInfo.EncryptionName,
+				FileName:       fileConfigInfo.Name,
+				Path:           fileConfigInfo.Path,
+				AvailableRange: models.FileAvailableRange{
+					VisitCount:     fileConfigInfo.VisitCount,
+					ExpirationTime: fileConfigInfo.ExpirationTime,
+				},
+				Hash: fileConfigInfo.FileInfo.Hash,
+			}
+			_, err := fileDbx.SaveFile(&file)
+			if err != nil {
+				res.Code = 10016
+				res.Error = err.Error()
+				res.Call(c)
 				return
 			}
+			res.Data = map[string]interface{}{
+				"urls": methods.GetResponseData(&fileConfigInfo),
+			}
+			res.Code = 200
+			res.Call(c)
+			return
 		}
 	}
 
 	// 创建文件信息的临时配置文件
-	if !methods.IsExists(fileConfigInfo.TempChuckFolderPath) {
+	if !nfile.IsExists(fileConfigInfo.TempChuckFolderPath) {
 		os.MkdirAll(fileConfigInfo.TempChuckFolderPath, os.ModePerm)
 	}
 	// 保存临时配置文件
@@ -388,32 +360,31 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 
 	// 当size到最后的时候
 	totalSizeInt64, err := strconv.ParseInt(totalSize.String(), 10, 64)
+	if err != nil {
+		res.Code = 10016
+		res.Error = err.Error()
+		res.Call(c)
+		return
+	}
 	// log.Info(totalSizeInt64+file.Size, fileConfigInfo.Size)
+	// 已经全部传完
 	if totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
 
 		code, err := methods.MergeFiles(fileConfigInfo)
 		if code == 200 {
-			file := models.File{
-				AppId:            fileConfigInfo.AppId,
-				EncryptionName:   fileConfigInfo.EncryptionName,
-				FileName:         fileConfigInfo.Name,
-				Path:             fileConfigInfo.Path,
-				Type:             fileConfigInfo.Type,
-				StaticFolderPath: fileConfigInfo.StaticFolderPath,
-				StaticFileName:   fileConfigInfo.StaticFileName,
-				AvailableRange: models.FileAvailableRange{
+			// 创建静态文件
 
+			file := models.File{
+				AppId:          fileConfigInfo.AppId,
+				EncryptionName: fileConfigInfo.EncryptionName,
+				FileName:       fileConfigInfo.Name,
+				Path:           fileConfigInfo.Path,
+				AvailableRange: models.FileAvailableRange{
 					VisitCount:     fileConfigInfo.VisitCount,
 					ExpirationTime: fileConfigInfo.ExpirationTime,
 				},
-				FileInfo: models.FileInfo{
-					Name:         fileConfigInfo.FileInfo.Name,
-					Size:         fileConfigInfo.FileInfo.Size,
-					Type:         fileConfigInfo.FileInfo.Type,
-					Suffix:       fileConfigInfo.FileInfo.Suffix,
-					LastModified: fileConfigInfo.FileInfo.LastModified,
-					Hash:         fileConfigInfo.FileInfo.Hash,
-				},
+				HashHistory: []models.HashHistory{},
+				Hash:        fileConfigInfo.FileInfo.Hash,
 			}
 			saveFile, err := fileDbx.SaveFile(&file)
 			log.Info(saveFile, err)

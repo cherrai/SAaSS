@@ -12,17 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type FileInfo struct {
-	Name         string `bson:"name" json:"name,omitempty"`
-	Size         int64  `bson:"size" json:"size,omitempty"`
-	Type         string `bson:"type" json:"type,omitempty"`
-	Suffix       string `bson:"suffix" json:"suffix,omitempty"`
-	LastModified int64  `bson:"lastModified" json:"lastModified,omitempty"`
-	Hash         string `bson:"hash" json:"hash,omitempty"`
-	Width        int64  `bson:"width" json:"width,omitempty"`
-	Height       int64  `bson:"height" json:"height,omitempty"`
-}
-
 type FileAvailableRange struct {
 	// -1 就是不限制 非-1则就是要和隔壁的比较大小
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
@@ -31,6 +20,9 @@ type FileAvailableRange struct {
 }
 type FileUsage struct {
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
+}
+type HashHistory struct {
+	Hash string `bson:"hash" json:"hash,omitempty"`
 }
 
 type File struct {
@@ -43,26 +35,30 @@ type File struct {
 	FileName string `bson:"fileName" json:"fileName,omitempty"`
 	// 云盘存储与访问路径
 	Path string `bson:"path" json:"path,omitempty"`
-	// 文件类型
-	Type string `bson:"type" json:"type,omitempty"`
-	// 静态存储文件夹
-	// 本地文件实际存储时间为3个月
-	StaticFolderPath string `bson:"staticFolderPath" json:"staticFolderPath,omitempty"`
-	// 静态存储名
-	StaticFileName string             `bson:"staticFileName" json:"staticFileName,omitempty"`
-	FileInfo       FileInfo           `bson:"fileInfo" json:"fileInfo,omitempty"`
+	// Hash
+	Hash string `bson:"hash" json:"hash,omitempty"`
+	// replace update 历史记录
+	HashHistory []HashHistory `bson:"hashHistory" json:"hashHistory,omitempty"`
+
 	AvailableRange FileAvailableRange `bson:"availableRange" json:"availableRange,omitempty"`
 	Usage          FileUsage          `bson:"usage" json:"usage,omitempty"`
+
 	// DeleteStatus:
 	// 1 normal
 	// 0 not accessible
-	// -1 delete
-	// -2 file_delete
+	// -1 RecycleBin
+	// -2 delete
 	Status int `bson:"status" json:"status,omitempty"`
 	// CreateTime Unix timestamp
 	CreateTime int64 `bson:"createTime" json:"createTime,omitempty"`
+	// UpdateTime Unix timestamp
+	UpdateTime int64 `bson:"updateTime" json:"updateTime,omitempty"`
 	// DeleteTime Unix timestamp
 	DeleteTime int64 `bson:"deleteTime" json:"deleteTime,omitempty"`
+	// DeadlineInRecycleBin Unix timestamp
+	DeadlineInRecycleBin int64 `bson:"deadlineInRecycleBin" json:"deadlineInRecycleBin,omitempty"`
+	// LastDownloadTime Unix timestamp
+	LastDownloadTime int64 `bson:"lastDownloadTime" json:"lastDownloadTime,omitempty"`
 }
 
 func (m *File) GetCollectionName() string {
@@ -80,8 +76,17 @@ func (m *File) Default() error {
 	if m.CreateTime == 0 {
 		m.CreateTime = unixTimeStamp
 	}
+	if m.UpdateTime == 0 {
+		m.UpdateTime = unixTimeStamp
+	}
 	if m.DeleteTime == 0 {
 		m.DeleteTime = -1
+	}
+	if m.DeadlineInRecycleBin == 0 {
+		m.DeadlineInRecycleBin = -1
+	}
+	if m.LastDownloadTime == 0 {
+		m.LastDownloadTime = -1
 	}
 	if m.AvailableRange.VisitCount <= 0 {
 		m.AvailableRange.VisitCount = -1
@@ -102,29 +107,13 @@ func (m *File) GetCollection() *mongo.Collection {
 
 func (m *File) Validate() error {
 	errStr := ""
-	if m.FileInfo != (FileInfo{}) {
-		err := validation.ValidateStruct(
-			&m.FileInfo,
-			validation.Parameter(&m.FileInfo.Name, validation.Required()),
-			validation.Parameter(&m.FileInfo.Size, validation.Required(), validation.GreaterEqual(1)),
-			validation.Parameter(&m.FileInfo.Type, validation.Required()),
-			validation.Parameter(&m.FileInfo.Suffix, validation.Required()),
-			validation.Parameter(&m.FileInfo.LastModified, validation.Required()),
-			validation.Parameter(&m.FileInfo.Hash, validation.Required()),
-		)
-		if err != nil {
-			errStr += err.Error()
-		}
-	}
 	err := validation.ValidateStruct(
 		m,
 		validation.Parameter(&m.AppId, validation.Required()),
 		validation.Parameter(&m.EncryptionName, validation.Required()),
 		validation.Parameter(&m.FileName, validation.Required()),
 		validation.Parameter(&m.Path, validation.Required()),
-		validation.Parameter(&m.Type, validation.Required()),
-		validation.Parameter(&m.StaticFolderPath, validation.Required()),
-		validation.Parameter(&m.StaticFileName, validation.Required()),
+		validation.Parameter(&m.Hash, validation.Required()),
 		validation.Parameter(&m.Status, validation.Enum([]int{1, -1, -2})),
 		validation.Parameter(&m.CreateTime, validation.Required()),
 	)

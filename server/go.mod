@@ -21,10 +21,10 @@ require (
 	github.com/google/uuid v1.3.0
 )
 
-// replace (
-// 	github.com/cherrai/nyanyago-utils => ../../../nyanya/nyanyago-utils
-// 	github.com/cherrai/saki-sso-go v1.0.0 => ../../saki-sso/saki-sso-go
-// )
+replace (
+	github.com/cherrai/nyanyago-utils => ../../../nyanya/nyanyago-utils
+	github.com/cherrai/saki-sso-go v1.0.0 => ../../saki-sso/saki-sso-go
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect

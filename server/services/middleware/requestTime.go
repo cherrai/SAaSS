@@ -15,8 +15,8 @@ func RequestTime() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		log.Time(c.Request.URL.Path + ", Request Time =>")
+		lt := log.Time()
 		c.Next()
-		log.TimeEnd(c.Request.URL.Path + ", Request Time =>")
+		lt.TimeEnd(c.Request.URL.Path + ", Request Time =>")
 	}
 }

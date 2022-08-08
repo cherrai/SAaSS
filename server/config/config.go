@@ -10,8 +10,7 @@ import (
 )
 
 var (
-	Config        *typings.Config
-	FileTokenSign = "saass_2022_6_4"
+	Config *typings.Config
 	// 文件到期后根据时间进行删除 未做
 	// []string{"Image", "Video", "Audio", "Text", "File"}
 	FileExpirationRemovalDeadline = 60 * 3600 * 24 * time.Second
