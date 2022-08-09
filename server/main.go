@@ -6,7 +6,6 @@ import (
 
 	conf "github.com/cherrai/SAaSS/config"
 	mongodb "github.com/cherrai/SAaSS/db/mongo"
-	redisdb "github.com/cherrai/SAaSS/db/redis"
 	"github.com/cherrai/SAaSS/services/gin_service"
 
 	"github.com/cherrai/nyanyago-utils/nlog"
@@ -52,11 +51,11 @@ func main() {
 	conf.Init()
 
 	// Connect to redis.
-	redisdb.ConnectRedis(&redis.Options{
-		Addr:     conf.Config.Redis.Addr,
-		Password: conf.Config.Redis.Password, // no password set
-		DB:       conf.Config.Redis.DB,       // use default DB
-	})
+	// redisdb.ConnectRedis(&redis.Options{
+	// 	Addr:     conf.Config.Redis.Addr,
+	// 	Password: conf.Config.Redis.Password, // no password set
+	// 	DB:       conf.Config.Redis.DB,       // use default DB
+	// })
 
 	conf.Redisdb = nredis.New(context.Background(), &redis.Options{
 		Addr:     conf.Config.Redis.Addr,
