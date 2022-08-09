@@ -1,13 +1,9 @@
 package middleware
 
 import (
-	"encoding/json"
-
 	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/SAaSS/services/methods"
 	"github.com/cherrai/SAaSS/services/response"
-
-	sso "github.com/cherrai/saki-sso-go"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,12 +59,12 @@ func Authorize() gin.HandlerFunc {
 	}
 }
 
-func ConvertResponseJson(jsonStr []byte) (sso.UserInfo, error) {
-	var m sso.UserInfo
-	err := json.Unmarshal([]byte(jsonStr), &m)
-	if err != nil {
-		Log.Info("Unmarshal with error: %+v\n", err)
-		return m, err
-	}
-	return m, nil
-}
+// func ConvertResponseJson(jsonStr []byte) (sso.UserInfo, error) {
+// 	var m sso.UserInfo
+// 	err := json.Unmarshal([]byte(jsonStr), &m)
+// 	if err != nil {
+// 		Log.Info("Unmarshal with error: %+v\n", err)
+// 		return m, err
+// 	}
+// 	return m, nil
+// }

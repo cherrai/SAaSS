@@ -241,10 +241,11 @@ func (dc *FileController) ProcessFile(c *gin.Context, filePath string) (string, 
 		quality := nint.ToInt(processSplit[2])
 		pixel := nint.ToInt64(processSplit[1])
 
-		saveAsFoloderPath := "./static/storage/temp/" + strings.Replace(
+		saveAsFoloderPath := "./static/temp/" + strings.Replace(
 			strings.Replace(filePath, fileNameOnly+fileType, "", -1), "./static/storage/", "", -1)
 		saveAsPath := fileNameOnly + "_" + processSplit[1] + "_" + processSplit[2] + fileType
 
+		// log.Info("saveAsPath", saveAsFoloderPath, saveAsPath)
 		// 创建文件夹
 		if !nfile.IsExists(saveAsFoloderPath) {
 			os.MkdirAll(saveAsFoloderPath, os.ModePerm)

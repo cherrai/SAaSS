@@ -12,6 +12,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// // 如果源文件hash一样
+// // 参数也是一样，那就是重复上传
+// type Process struct {
+// 	// x-saass-process=image/resize,160,70
+// 	Parameter string `bson:"parameter" json:"parameter,omitempty"`
+// 	// 仅仅存储Hash即可
+// 	ProcessInfo ProcessInfo `bson:"processInfo" json:"processInfo,omitempty"`
+// }
+// type ProcessInfo struct {
+// 	Hash string `bson:"hash" json:"hash,omitempty"`
+// }
 type FileInfo struct {
 	Name         string `bson:"name" json:"name,omitempty"`
 	Size         int64  `bson:"size" json:"size,omitempty"`
@@ -21,6 +32,7 @@ type FileInfo struct {
 	Hash         string `bson:"hash" json:"hash,omitempty"`
 	Width        int64  `bson:"width" json:"width,omitempty"`
 	Height       int64  `bson:"height" json:"height,omitempty"`
+	// Process      Process `bson:"process" json:"process,omitempty"`
 }
 
 type StaticFile struct {

@@ -146,8 +146,11 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 		return
 	}
 
-	// 创建静态文件
+	// 1, 如果有压缩工作,则可以在最后上传完毕后这里进行压缩,
+	// 这样hash还是以前的
+	// 2、考虑是否存储一下新文件的hash
 
+	// 创建静态文件
 	staticFile := models.StaticFile{
 		FileName: fileName,
 		Path:     path,

@@ -227,13 +227,13 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	}
 	// 保存临时配置文件
 	serverConfig, serverConfigErr := os.Create(fileConfigInfo.TempFolderPath + "/info.json")
-	defer serverConfig.Close()
 	if serverConfigErr != nil {
 		res.Error = serverConfigErr.Error()
 		res.Code = 10001
 		res.Call(c)
 		return
 	}
+	defer serverConfig.Close()
 
 	str, _ := json.MarshalIndent(fileConfigInfo, "", "  ")
 	_, serverConfigWriteErr := serverConfig.Write([]byte(str))

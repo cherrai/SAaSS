@@ -3,10 +3,7 @@ module github.com/cherrai/SAaSS
 go 1.17
 
 require (
-	// github.com/cherrai/nyanyago-utils v1.0.0
-	// github.com/cherrai/saki-sso-go v1.0.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/googollee/go-socket.io v1.6.2
 	github.com/mozillazg/go-pinyin v0.19.0 // indirect
 	go.mongodb.org/mongo-driver v1.8.0
@@ -15,16 +12,16 @@ require (
 
 require (
 	github.com/cherrai/nyanyago-utils v1.0.0
-	github.com/cherrai/saki-sso-go v1.0.0
+	// github.com/cherrai/saki-sso-go v1.0.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 )
 
-replace (
-	github.com/cherrai/nyanyago-utils => ../../../nyanya/nyanyago-utils
-	github.com/cherrai/saki-sso-go v1.0.0 => ../../saki-sso/saki-sso-go
-)
+// replace (
+// 	github.com/cherrai/nyanyago-utils => ../../../nyanya/nyanyago-utils
+// // github.com/cherrai/saki-sso-go v1.0.0 => ../../saki-sso/saki-sso-go
+// )
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -61,6 +58,5 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

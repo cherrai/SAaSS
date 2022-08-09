@@ -18,7 +18,7 @@ dockerremove() {
 
 start() {
   echo "-> 正在启动「${name}」服务"
-  gitpull
+  # gitpull
   dockerremove
 
   echo "-> 正在准备相关资源"
@@ -45,7 +45,7 @@ stop() {
 proto() {
   echo "-> 准备编译Protobuf"
   cd ./protos && protoc --go_out=. *.proto
-  
+
   echo "-> 编译Protobuf成功"
 }
 

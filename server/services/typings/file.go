@@ -18,7 +18,14 @@ type TempFileConfigInfo struct {
 	ExpirationTime int64
 	VisitCount     int64
 	FileInfo       FileInfo
+	// Parameter      Parameter
 }
+
+// type Parameter struct {
+// 	// x-saass-process=image/resize,160,70
+// 	Parameter string
+// 	Hash      string
+// }
 
 type FileInfo struct {
 	Name         string

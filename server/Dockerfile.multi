@@ -17,7 +17,7 @@ RUN \
   apk add openssh 
 
 COPY  .ssh/ \
-  /root/.ssh/
+  /root/.ssh/ 
 
 COPY  .gitconfig \
   /root/
@@ -46,4 +46,4 @@ COPY --from=BUILD_IMAGE \
 
 EXPOSE 16100
 
-CMD ["./saass","--config","config.pro.json"]
+CMD ["./saass","--config","config.test.json"]
