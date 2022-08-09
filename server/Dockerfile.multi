@@ -41,7 +41,7 @@ WORKDIR /app
 
 COPY --from=BUILD_IMAGE \
   /app/saass \
-  /app/config.pro.json \
+  /app/config.test.json \
   /app/
 
 EXPOSE 16100
