@@ -2,7 +2,8 @@
 name="saass"
 port=16100
 branch="main"
-allowMethods=("stop gitpull proto dockerremove start dockerlogs")
+configFilePath="config.test.json"
+allowMethods=("stop gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
@@ -28,18 +29,34 @@ start() {
   cp -r ~/.gitconfig $DIR
 
   echo "-> 准备构建Docker"
-  docker build -t $name $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') . -f Dockerfile.multi
+  docker build \
+    -t $name \
+    $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') . \
+    -f Dockerfile.multi
   rm -rf $DIR/.ssh
   rm -rf $DIR/.gitconfig
 
   echo "-> 准备运行Docker"
-  docker stop $name
-  docker rm $name
-  docker run --name=$name $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') -p $port:$port --restart=always -d $name
+  remove
+
+  docker run \
+    -v $DIR/static:/static \
+    -v $DIR/conf.json:/conf.json \
+    -v $DIR/$configFilePath:/config.json \
+    --name=$name \
+    $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') \
+    -p $port:$port \
+    --restart=always \
+    -d $name
 }
 
 stop() {
   docker stop $name
+}
+
+remove() {
+  docker stop $name
+  docker rm $name
 }
 
 proto() {
@@ -49,7 +66,7 @@ proto() {
   echo "-> 编译Protobuf成功"
 }
 
-dockerlogs() {
+logs() {
   docker logs -f $name
 }
 

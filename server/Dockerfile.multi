@@ -16,7 +16,7 @@ RUN \
   apk add git && \
   apk add openssh 
 
-COPY  .ssh/ \
+COPY .ssh/ \
   /root/.ssh/ 
 
 COPY  .gitconfig \
@@ -27,6 +27,7 @@ COPY go.mod \
   /app/
 
 RUN \
+  chmod -R 600 /root/.ssh/id_rsa && \ 
   git config --global url."git@github.com:".insteadOf "https://github.com/" && \
   go mod download
 
@@ -37,13 +38,13 @@ RUN \
 
 FROM alpine:3.10
 
-WORKDIR /app
+WORKDIR /
 
 COPY --from=BUILD_IMAGE \
   /app/saass \
-  /app/config.test.json \
-  /app/
+  /
+
 
 EXPOSE 16100
 
-CMD ["./saass","--config","config.test.json"]
+CMD ["./saass","--config","config.json"]
