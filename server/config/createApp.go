@@ -30,7 +30,7 @@ func Init() {
 }
 
 func readFile() {
-	log.Info("configDir", configDir, nfile.IsExists(configDir))
+	// log.Info("configDir", configDir, nfile.IsExists(configDir))
 	if !nfile.IsExists(configDir) {
 		writeFile()
 	}

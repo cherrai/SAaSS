@@ -2,7 +2,7 @@
 name="saass"
 port=16100
 branch="main"
-configFilePath="config.pro.json"
+configFilePath="config.test.json"
 allowMethods=("ls stop gitpull proto dockerremove start logs")
 
 gitpull() {
@@ -18,6 +18,7 @@ dockerremove() {
 }
 
 start() {
+  touch $DIR/conf.json
   echo "-> 正在启动「${name}」服务"
   gitpull
   dockerremove
@@ -39,7 +40,6 @@ start() {
   echo "-> 准备运行Docker"
   remove
 
-  touch $DIR/conf.json
   docker run \
     -v $DIR/static:/static \
     -v $DIR/conf.json:/conf.json \
