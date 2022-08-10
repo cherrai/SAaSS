@@ -7,6 +7,7 @@ import (
 
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/cipher"
+	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/google/uuid"
 )
@@ -29,6 +30,10 @@ func Init() {
 }
 
 func readFile() {
+	log.Info("configDir", configDir, nfile.IsExists(configDir))
+	if !nfile.IsExists(configDir) {
+		writeFile()
+	}
 	jsonFile, _ := os.Open(configDir)
 	defer jsonFile.Close()
 	decoder := json.NewDecoder(jsonFile)
