@@ -18,7 +18,7 @@ dockerremove() {
 }
 
 start() {
-  touch $DIR/conf.json
+  echo "" >> ./conf.json
   echo "-> 正在启动「${name}」服务"
   gitpull
   dockerremove
