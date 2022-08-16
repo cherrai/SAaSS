@@ -131,9 +131,9 @@ func (fd *FileDbx) DeleteFile(appId, path, fileName string, deadlineInRecycleBin
 				},
 			},
 		}, bson.M{
-			"$inc": bson.M{
+			"$set": bson.M{
 				"deleteTime":           time.Now().Unix(),
-				"delete":               -1,
+				"status":               -1,
 				"deadlineInRecycleBin": deadlineInRecycleBin,
 			},
 		}, options.Update().SetUpsert(false))
@@ -168,6 +168,9 @@ func (fd *FileDbx) GetFileListByPath(appId, path string) (*GetFileListByPathType
 						// 		Options: "i",
 						// 	},
 						// },
+					},
+					{
+						"status": 1,
 					},
 				},
 			},
@@ -221,6 +224,8 @@ func (fd *FileDbx) GetFileWithEncryptionName(encryptionName string) (*models.Fil
 		},
 	}
 
+	// log.Info("GetFileWithEncryptionName encryptionName", params, encryptionName)
+
 	var results []*models.File
 	opts, err := file.GetCollection().Aggregate(context.TODO(), params)
 	if err != nil {
@@ -241,6 +246,9 @@ func (fd *FileDbx) GetFileWithPath(staticFileName string) (*models.File, error) 
 				"$and": []bson.M{
 					{
 						"staticFileName": staticFileName,
+					},
+					{
+						"status": 1,
 					},
 				},
 			},
@@ -266,6 +274,9 @@ func (fd *FileDbx) GetFileWithStaticFileName(staticFileName string) (*models.Fil
 				"$and": []bson.M{
 					{
 						"staticFileName": staticFileName,
+					},
+					{
+						"status": 1,
 					},
 				},
 			},
@@ -377,7 +388,7 @@ func (fd *FileDbx) UpdateFile(file *models.File) (*mongo.UpdateResult, error) {
 func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 	// 先检测状态正常的有没有
 	getFile, err := fd.GetFileWithFileInfo(file.AppId, file.Path, file.FileName)
-	// log.Info(getFile, err)
+	log.Info(getFile, err)
 	if err != nil {
 		return nil, err
 	}

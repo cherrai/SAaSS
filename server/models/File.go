@@ -37,6 +37,8 @@ type File struct {
 	Path string `bson:"path" json:"path,omitempty"`
 	// Hash
 	Hash string `bson:"hash" json:"hash,omitempty"`
+	// Label
+	Label string `bson:"label" json:"label,omitempty"`
 	// replace update 历史记录
 	HashHistory []HashHistory `bson:"hashHistory" json:"hashHistory,omitempty"`
 
@@ -48,7 +50,7 @@ type File struct {
 	// 0 not accessible
 	// -1 RecycleBin
 	// -2 delete
-	Status int `bson:"status" json:"status,omitempty"`
+	Status int64 `bson:"status" json:"status,omitempty"`
 	// CreateTime Unix timestamp
 	CreateTime int64 `bson:"createTime" json:"createTime,omitempty"`
 	// UpdateTime Unix timestamp
@@ -95,6 +97,7 @@ func (m *File) Default() error {
 		m.AvailableRange.ExpirationTime = -1
 	}
 
+	log.Info("mmmm", m.Status)
 	if err := m.Validate(); err != nil {
 		return errors.New(m.GetCollectionName() + " Validate: " + err.Error())
 	}
@@ -114,7 +117,7 @@ func (m *File) Validate() error {
 		validation.Parameter(&m.FileName, validation.Required()),
 		validation.Parameter(&m.Path, validation.Required()),
 		validation.Parameter(&m.Hash, validation.Required()),
-		validation.Parameter(&m.Status, validation.Enum([]int{1, -1, -2})),
+		validation.Parameter(&m.Status, validation.Enum([]int64{1, -1, -2})),
 		validation.Parameter(&m.CreateTime, validation.Required()),
 	)
 	if err != nil {

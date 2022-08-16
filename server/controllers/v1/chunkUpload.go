@@ -199,6 +199,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 				EncryptionName: fileConfigInfo.EncryptionName,
 				FileName:       fileConfigInfo.Name,
 				Path:           fileConfigInfo.Path,
+				Status:         1,
 				AvailableRange: models.FileAvailableRange{
 					VisitCount:     fileConfigInfo.VisitCount,
 					ExpirationTime: fileConfigInfo.ExpirationTime,
@@ -206,6 +207,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 				Hash: fileConfigInfo.FileInfo.Hash,
 			}
 			_, err := fileDbx.SaveFile(&file)
+			log.Info("SaveFile", err)
 			if err != nil {
 				res.Code = 10016
 				res.Error = err.Error()
@@ -331,7 +333,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		res.Call(c)
 		return
 	}
-	// log.Info("final", fileInfoMap["final"])
+	log.Info("final", fileInfoMap["final"], file.Size, fileConfigInfo.ChunkSize)
 	if fileInfoMap["final"] == "no" && file.Size != fileConfigInfo.ChunkSize {
 		res.Code = 10018
 		res.Call(c)
@@ -379,6 +381,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 				EncryptionName: fileConfigInfo.EncryptionName,
 				FileName:       fileConfigInfo.Name,
 				Path:           fileConfigInfo.Path,
+				Status:         1,
 				AvailableRange: models.FileAvailableRange{
 					VisitCount:     fileConfigInfo.VisitCount,
 					ExpirationTime: fileConfigInfo.ExpirationTime,
@@ -387,7 +390,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 				Hash:        fileConfigInfo.FileInfo.Hash,
 			}
 			saveFile, err := fileDbx.SaveFile(&file)
-			log.Info(saveFile, err)
+			log.Info("saveFile", saveFile, err)
 			if err != nil {
 				res.Code = 10016
 				res.Error = err.Error()

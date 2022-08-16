@@ -18,9 +18,9 @@ dockerremove() {
 }
 
 start() {
-  echo "" >> ./conf.json
+  echo "" >>./conf.json
   echo "-> 正在启动「${name}」服务"
-  gitpull
+  # gitpull
   dockerremove
 
   echo "-> 正在准备相关资源"
