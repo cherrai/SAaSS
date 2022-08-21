@@ -2,7 +2,7 @@
 name="saass"
 port=16100
 branch="main"
-configFilePath="config.test.json"
+configFilePath="config.pro.json"
 allowMethods=("ls stop gitpull proto dockerremove start logs")
 
 gitpull() {
