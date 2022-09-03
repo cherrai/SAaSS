@@ -163,8 +163,17 @@ func (dc *FileController) GetFolderFiles(c *gin.Context) {
 	}
 
 	res.Code = 200
-	log.Info("file", file)
+	// log.Info("file", file)
 	tempList := []map[string]interface{}{}
+
+	if len(file.Total) == 0 {
+		res.Data = map[string]interface{}{
+			"total": 0,
+			"list":  tempList,
+		}
+		res.Call(c)
+		return
+	}
 
 	for _, v := range file.List {
 		tempList = append(tempList, map[string]interface{}{
