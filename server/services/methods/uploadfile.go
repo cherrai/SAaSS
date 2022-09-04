@@ -21,20 +21,8 @@ import (
 
 var (
 	log     = nlog.New()
-	a       = 1
 	fileDbx = new(dbxV1.FileDbx)
 )
-
-func IsExists(path string) bool {
-	_, err := os.Stat(path) //os.Stat获取文件信息
-	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
-	}
-	return true
-}
 
 // func GetHash(file []byte) (string, error) {
 // 	hasher := sha256.New()
@@ -67,7 +55,7 @@ func GetToken(fileInfo typings.TempFileConfigInfo) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(conf.Config.FileTokenSign))
+	tokenString, err := token.SignedString([]byte(conf.Config.File.FileTokenSign))
 	if err != nil {
 		return "", err
 	}
@@ -77,9 +65,9 @@ func GetToken(fileInfo typings.TempFileConfigInfo) (string, error) {
 func ParseToken(token string) (*typings.TempFileConfigInfo, error) {
 	tokenData, err := jwt.ParseWithClaims(token, &jwtCustomClaims{}, func(tokenStr *jwt.Token) (interface{}, error) {
 		if _, ok := tokenStr.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", tokenStr.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", tokenStr.Header["alg"])
 		}
-		return []byte(conf.Config.FileTokenSign), nil
+		return []byte(conf.Config.File.FileTokenSign), nil
 	})
 	if err != nil {
 		return nil, err

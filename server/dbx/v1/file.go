@@ -360,6 +360,37 @@ func (fd *FileDbx) GetStaticFileWithHash(hash string) (*models.StaticFile, error
 	return results[0], nil
 }
 
+func (fd *FileDbx) GetStaticFileWithPath(path, fileName string) (*models.StaticFile, error) {
+	staticFile := new(models.StaticFile)
+	params := []bson.M{
+		{
+			"$match": bson.M{
+				"$and": []bson.M{
+					{
+						"path": path,
+					},
+					{
+						"fileName": fileName,
+					},
+				},
+			},
+		},
+	}
+
+	var results []*models.StaticFile
+	opts, err := staticFile.GetCollection().Aggregate(context.TODO(), params)
+	if err != nil {
+		return nil, err
+	}
+	if err = opts.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, nil
+	}
+	return results[0], nil
+}
+
 func (fd *FileDbx) UpdateFile(file *models.File) (*mongo.UpdateResult, error) {
 	result, err := file.GetCollection().UpdateMany(context.TODO(),
 		bson.M{
@@ -458,4 +489,75 @@ func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, er
 		return nil, err
 	}
 	return sf, nil
+}
+
+func (fd *FileDbx) GetUnusedStaticFileList(pageSize, pageNum int, deadline int64) ([]*models.StaticFile, error) {
+	sf := new(models.StaticFile)
+	// log.Info("deadline", time.Now().Unix(), deadline)
+	params := []bson.M{
+		{
+			"$match": bson.M{
+				"$and": []bson.M{
+					{
+						"createTime": bson.M{
+							"$lte": deadline,
+						},
+					},
+				},
+			},
+		},
+		{
+			"$lookup": bson.M{
+				"from":         "File",
+				"localField":   "fileInfo.hash",
+				"foreignField": "hash",
+				"as":           "files",
+			},
+		},
+		{
+			"$match": bson.M{
+				"$and": []bson.M{
+					{
+						"files": bson.M{
+							"$size": 0,
+						},
+					},
+				},
+			},
+		},
+		// {
+		// 	"$sort": bson.M{
+		// 		"createTime": -1,
+		// 	},
+		// },
+		{
+			"$skip": pageSize * (pageNum - 1),
+		},
+		{
+			"$limit": pageSize,
+		},
+	}
+
+	var results []*models.StaticFile
+	opts, err := sf.GetCollection().Aggregate(context.TODO(), params)
+	if err != nil {
+		return nil, err
+	}
+	if err = opts.All(context.TODO(), &results); err != nil || len(results) == 0 {
+		return results, err
+	}
+	return results, nil
+}
+
+func (fd *FileDbx) DeleteStaticFile(id primitive.ObjectID) error {
+	sf := new(models.StaticFile)
+	params := bson.M{
+		"_id": id,
+	}
+
+	_, err := sf.GetCollection().DeleteOne(context.TODO(), params)
+	if err != nil {
+		return err
+	}
+	return nil
 }

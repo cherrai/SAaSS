@@ -6,14 +6,18 @@ type ServerConfig struct {
 }
 
 type Config struct {
-	Server           Server
-	AppList          []AppListItem
-	FileTokenSign    string
-	StaticPathDomain string
-	Redis            Redis
-	Mongodb          Mongodb
+	Server           Server        `json:"server"`
+	File             File          `json:"file"`
+	AppList          []AppListItem `json:"appList"`
+	StaticPathDomain string        `json:"staticPathDomain"`
+	Redis            Redis         `json:"redis"`
+	Mongodb          Mongodb       `json:"mongodb"`
 }
 
+type File struct {
+	UnusedFileRetentionTime int64  `json:"unusedFileRetentionTime"`
+	FileTokenSign           string `json:"fileTokenSign"`
+}
 type AppListItem struct {
 	Name         string `json:"name"`
 	AppId        string `json:"appId"`

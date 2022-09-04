@@ -7,6 +7,7 @@ import (
 	conf "github.com/cherrai/SAaSS/config"
 	mongodb "github.com/cherrai/SAaSS/db/mongo"
 	"github.com/cherrai/SAaSS/services/gin_service"
+	"github.com/cherrai/SAaSS/services/methods"
 
 	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nredis"
@@ -66,6 +67,8 @@ func main() {
 
 	// Connect to mongodb.
 	mongodb.ConnectMongoDB(conf.Config.Mongodb.Currentdb.Uri, conf.Config.Mongodb.Currentdb.Name)
+
+	methods.Clear()
 
 	gin_service.Init()
 
