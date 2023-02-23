@@ -401,12 +401,11 @@ func (fd *FileDbx) UpdateFile(file *models.File) (*mongo.UpdateResult, error) {
 			},
 		}, bson.M{
 			"$set": bson.M{
-				"hash":                          file.Hash,
-				"status":                        file.Status,
-				"updateTime":                    time.Now().Unix(),
-				"deleteTime":                    file.DeleteTime,
-				"availableRange.visitCount":     file.AvailableRange.VisitCount,
-				"availableRange.expirationTime": file.AvailableRange.ExpirationTime,
+				"hash":           file.Hash,
+				"status":         file.Status,
+				"updateTime":     time.Now().Unix(),
+				"deleteTime":     file.DeleteTime,
+				"availableRange": file.AvailableRange,
 			},
 		}, options.Update().SetUpsert(false))
 
@@ -428,6 +427,7 @@ func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 		getFile.DeleteTime = -1
 		getFile.AvailableRange.VisitCount = file.AvailableRange.VisitCount
 		getFile.AvailableRange.ExpirationTime = file.AvailableRange.ExpirationTime
+		getFile.AvailableRange.Password = file.AvailableRange.Password
 		if getFile.Hash != file.Hash {
 			getFile.HashHistory = append(getFile.HashHistory, models.HashHistory{
 				Hash: getFile.Hash,

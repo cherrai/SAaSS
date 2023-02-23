@@ -3,7 +3,6 @@ package methods
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -167,7 +166,7 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 	// 存储内容 hash
 
 	code = 200
-	err = errors.New("")
+	err = nil
 
 	return
 }

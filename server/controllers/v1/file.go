@@ -11,6 +11,7 @@ import (
 	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/SAaSS/services/response"
+	"github.com/cherrai/nyanyago-utils/ncredentials"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nimages"
 	"github.com/cherrai/nyanyago-utils/nint"
@@ -300,55 +301,61 @@ func (dc *FileController) Download(c *gin.Context) {
 	folderPath := path[0 : strings.LastIndex(path, "/")+1]
 	encryptionId := c.Query("a")
 
+	log.Info(folderPath, filePath, encryptionId == "")
+	var file *models.File
+	var err error
+	appId := ""
+	appKey := ""
+
 	if folderPath == "/" && encryptionId == "" {
 		encryptionName := filePath
-		// log.Info("encryptionName", encryptionName)
-		file, err := fileDbx.GetFileWithEncryptionName(encryptionName)
+		log.Info("encryptionName", encryptionName)
+		file, err = fileDbx.GetFileWithEncryptionName(encryptionName)
 		// log.Info("file", file)
+
 		if file == nil || err != nil {
 			c.String(http.StatusNotFound, "")
 			return
 		}
+		for _, v := range conf.AppList {
+			if v.AppId == file.AppId {
+				appKey = v.AppKey
+				break
+			}
+		}
 
-		if err = dc.FilterFile(file); err != nil {
+	} else {
+		for _, v := range conf.AppList {
+			if v.EncryptionId == encryptionId {
+				appId = v.AppId
+				appKey = v.AppKey
+				break
+			}
+		}
+		// log.Info("filePath", path, filePath, 2, strings.LastIndex(path, "/"))
+		log.Info("folderPath", folderPath)
+		// log.Info(appId, nstrings.StringOr(folderPath, "/"), filePath)
+		file, err = fileDbx.GetFileWithFileInfo(appId, nstrings.StringOr(folderPath, "/"), filePath)
+		// log.Info("file, err", file, err)
+		if file == nil || err != nil {
 			c.String(http.StatusNotFound, "")
 			return
 		}
-		if err = dc.VisitFile(file); err != nil {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-		// log.Info("hash", file.Hash)
-		sf, err := fileDbx.GetStaticFileWithHash(file.Hash)
-		// log.Info("sf", sf, err)
-		if err != nil || sf == nil {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-		processFilePath, err := dc.ProcessFile(c, sf.Path+"/"+sf.FileName)
-		if err != nil {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-		c.File(processFilePath)
-		return
 	}
 
-	appId := ""
-	for _, v := range conf.AppList {
-		if v.EncryptionId == encryptionId {
-			appId = v.AppId
-			break
+	if file.AvailableRange.Password != "" {
+		u := c.Query("u")
+		p := c.Query("p")
+		if u == "" || p == "" {
+			c.String(http.StatusNotFound, "")
+			return
 		}
-	}
-	// log.Info("filePath", path, filePath, 2, strings.LastIndex(path, "/"))
-	// log.Info("folderPath", folderPath)
-	// log.Info(appId, nstrings.StringOr(folderPath, "/"), filePath)
-	file, err := fileDbx.GetFileWithFileInfo(appId, nstrings.StringOr(folderPath, "/"), filePath)
-	// log.Info("file, err", file, err)
-	if file == nil || err != nil {
-		c.String(http.StatusNotFound, "")
-		return
+		log.Info(appKey + file.AvailableRange.Password)
+		log.Info(u, p, ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password))
+		if !ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password) {
+			c.String(http.StatusNotFound, "")
+			return
+		}
 	}
 	if err = dc.FilterFile(file); err != nil {
 		c.String(http.StatusNotFound, "")
@@ -363,7 +370,8 @@ func (dc *FileController) Download(c *gin.Context) {
 		c.String(http.StatusNotFound, "")
 		return
 	}
-	processFilePath, err := dc.ProcessFile(c, sf.Path+sf.FileName)
+	processFilePath, err := dc.ProcessFile(c, sf.Path+"/"+sf.FileName)
+	// log.Info("processFilePath", processFilePath, err)
 	if err != nil {
 		c.String(http.StatusNotFound, "")
 		return

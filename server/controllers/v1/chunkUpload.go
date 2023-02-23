@@ -81,6 +81,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		CreateTime:     time.Now().Unix(),
 		ExpirationTime: nint.ToInt64(c.PostForm("expirationTime")),
 		VisitCount:     nint.ToInt64(c.PostForm("visitCount")),
+		Password:       c.PostForm("password"),
 
 		FileInfo: typings.FileInfo{
 			Name:         fileNameOnly,
@@ -148,7 +149,9 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// 内容存在
 	staticFilesIsExist := false
 
+	log.Info(fileConfigInfo.FileInfo.Hash)
 	sf, err := fileDbx.GetStaticFileWithHash(fileConfigInfo.FileInfo.Hash)
+	log.Info(sf, err)
 	if err != nil {
 		res.Error = err.Error()
 		res.Code = 10019
@@ -161,6 +164,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			staticFilesIsExist = true
 		}
 	}
+	log.Info("staticFilesIsExist", staticFilesIsExist)
 	if staticFilesIsExist {
 		// 内容存在则更新
 		if file != nil && file.Hash != "" {
@@ -175,6 +179,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			file.DeleteTime = -1
 			file.DeadlineInRecycleBin = -1
 			file.AvailableRange.VisitCount = fileConfigInfo.VisitCount
+			file.AvailableRange.Password = fileConfigInfo.Password
 			file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
 			fileConfigInfo.EncryptionName = file.EncryptionName
 
@@ -203,6 +208,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 				AvailableRange: models.FileAvailableRange{
 					VisitCount:     fileConfigInfo.VisitCount,
 					ExpirationTime: fileConfigInfo.ExpirationTime,
+					Password:       fileConfigInfo.Password,
 				},
 				Hash: fileConfigInfo.FileInfo.Hash,
 			}
@@ -220,6 +226,10 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			res.Code = 200
 			res.Call(c)
 			return
+		}
+	} else {
+		if file != nil && file.Hash != "" && fileConfigInfo.Path == file.Path && fileConfigInfo.Name == file.FileName {
+			fileConfigInfo.EncryptionName = file.EncryptionName
 		}
 	}
 
@@ -279,6 +289,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		"uploadedOffset":    uploadedOffset,
 		"urls":              methods.GetResponseData(&fileConfigInfo),
 	}
+	log.Info(res.Data)
 	res.Call(c)
 }
 
@@ -373,6 +384,13 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	if totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
 
 		code, err := methods.MergeFiles(fileConfigInfo)
+		log.Info("MergeFiles", code, err != nil)
+		if err != nil {
+			res.Code = 10016
+			res.Error = err.Error()
+			res.Call(c)
+			return
+		}
 		if code == 200 {
 			// 创建静态文件
 
@@ -385,12 +403,13 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 				AvailableRange: models.FileAvailableRange{
 					VisitCount:     fileConfigInfo.VisitCount,
 					ExpirationTime: fileConfigInfo.ExpirationTime,
+					Password:       fileConfigInfo.Password,
 				},
 				HashHistory: []models.HashHistory{},
 				Hash:        fileConfigInfo.FileInfo.Hash,
 			}
 			saveFile, err := fileDbx.SaveFile(&file)
-			log.Info("saveFile", saveFile, err)
+			log.Info("saveFile", fileConfigInfo.Password, saveFile, err)
 			if err != nil {
 				res.Code = 10016
 				res.Error = err.Error()
@@ -401,7 +420,6 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 			res.Data = methods.GetResponseData(fileConfigInfo)
 		}
 		res.Code = code
-		res.Error = err.Error()
 		res.Code = 200
 		res.Call(c)
 		return

@@ -17,6 +17,7 @@ type TempFileConfigInfo struct {
 	CreateTime     int64
 	ExpirationTime int64
 	VisitCount     int64
+	Password       string
 	FileInfo       FileInfo
 	// Parameter      Parameter
 }

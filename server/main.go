@@ -62,7 +62,7 @@ func main() {
 		Addr:     conf.Config.Redis.Addr,
 		Password: conf.Config.Redis.Password, // no password set
 		DB:       conf.Config.Redis.DB,       // use default DB
-	}, conf.BaseKey)
+	}, conf.BaseKey, log)
 	conf.Redisdb.CreateKeys(conf.RedisCacheKeys)
 
 	// Connect to mongodb.

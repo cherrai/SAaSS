@@ -23,6 +23,7 @@ var (
 )
 
 func Init() {
+	configDir = Config.AppListDir
 	readFile()
 	CreateServerId()
 	CreateApp()

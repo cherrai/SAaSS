@@ -16,7 +16,8 @@ type FileAvailableRange struct {
 	// -1 就是不限制 非-1则就是要和隔壁的比较大小
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
 	// ExpirationTime Unix timestamp
-	ExpirationTime int64 `bson:"expirationTime" json:"expirationTime,omitempty"`
+	ExpirationTime int64  `bson:"expirationTime" json:"expirationTime,omitempty"`
+	Password       string `bson:"password" json:"password,omitempty"`
 }
 type FileUsage struct {
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`

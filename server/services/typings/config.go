@@ -9,6 +9,7 @@ type Config struct {
 	Server           Server        `json:"server"`
 	File             File          `json:"file"`
 	AppList          []AppListItem `json:"appList"`
+	AppListDir       string        `json:"appListDir"`
 	StaticPathDomain string        `json:"staticPathDomain"`
 	Redis            Redis         `json:"redis"`
 	Mongodb          Mongodb       `json:"mongodb"`
