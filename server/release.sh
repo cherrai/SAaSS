@@ -3,7 +3,7 @@ name="saass"
 port=16100
 branch="main"
 configFilePath="config.pro.json"
-allowMethods=("ls stop gitpull proto dockerremove start logs")
+allowMethods=("ls stop remove gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
