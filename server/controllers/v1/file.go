@@ -350,8 +350,8 @@ func (dc *FileController) Download(c *gin.Context) {
 			c.String(http.StatusNotFound, "")
 			return
 		}
-		log.Info(appKey + file.AvailableRange.Password)
-		log.Info(u, p, ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password))
+		// log.Info(appKey + file.AvailableRange.Password)
+		// log.Info(u, p, ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password))
 		if !ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password) {
 			c.String(http.StatusNotFound, "")
 			return
