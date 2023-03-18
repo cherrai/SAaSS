@@ -1,12 +1,17 @@
 package typings
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type TempFileConfigInfo struct {
 	AppId string
 	Name  string
 	// 如果文件一样，则加密地址永远也是一样的
-	EncryptionName string
+	ShortId string
 	// 文件存储路径
-	Path string
+	RootPath         string
+	ParentFolderPath string
+	ParentFolderId   primitive.ObjectID
+
 	// StaticFolderPath string
 	// StaticFileName   string
 	// 临时文件夹路径
@@ -19,6 +24,9 @@ type TempFileConfigInfo struct {
 	VisitCount     int64
 	Password       string
 	FileInfo       FileInfo
+	UserId         string
+	AllowShare     int64
+	ShareUsers     []string
 	// Parameter      Parameter
 }
 

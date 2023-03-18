@@ -42,6 +42,7 @@ func InitRouter() {
 	// // 处理解密加密
 	// Router.Use(middleware.Encryption())
 	Router.Use(middleware.CheckApp())
+	Router.Use(middleware.CheckUserToken())
 	Router.Use(middleware.Authorize())
 
 	// 测试上传

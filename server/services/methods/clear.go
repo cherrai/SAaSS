@@ -8,6 +8,7 @@ import (
 	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/ntimer"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Clear() {
@@ -15,6 +16,7 @@ func Clear() {
 		clearEmptyFolder("./static")
 		clearUnstoredStaticFile("./static/storage")
 		clearUnuserdFile(1)
+
 		ntimer.SetRepeatTimeTimer(func() {
 			clearEmptyFolder("./static")
 			clearUnstoredStaticFile("./static/storage")
@@ -81,20 +83,21 @@ func clearUnuserdFile(pageNum int) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info(len(list))
+	log.Info("len(list)", len(list))
 
 	// 2. 删除这些静态文件的数据库内容和文件内容
-	for _, v := range list {
-		log.Info(v.Id, " -> deleting")
+	for _, item := range list {
+		v := *item
+		log.Info((v)["_id"], (v)["files"], v["path"], v["fileName"], " -> deleting")
 		// 2.1. 检测静态文件是否存在,有则删除
-		path := v.Path + "/" + v.FileName
+		path := v["path"].(string) + "/" + v["fileName"].(string)
 		if nfile.IsExists(path) {
 			os.Remove(path)
 		} else {
-			log.Info(v.Id, " -> static file does not exist")
+			log.Info(v["_id"], " -> static file does not exist")
 		}
 		// 2.2 删除数据库内容
-		err := fileDbx.DeleteStaticFile(v.Id)
+		err := fileDbx.DeleteStaticFile(v["_id"].(primitive.ObjectID))
 		if err != nil {
 			log.Error(err)
 		}

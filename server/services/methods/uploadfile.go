@@ -41,11 +41,11 @@ func GetHash(filePath string) (string, error) {
 
 type jwtCustomClaims struct {
 	// 追加自己需要的信息
-	FileInfo typings.TempFileConfigInfo `json:"fileInfo"`
+	FileInfo *typings.TempFileConfigInfo `json:"fileInfo"`
 	jwt.StandardClaims
 }
 
-func GetToken(fileInfo typings.TempFileConfigInfo) (string, error) {
+func GetToken(fileInfo *typings.TempFileConfigInfo) (string, error) {
 	claims := jwtCustomClaims{
 		fileInfo,
 		jwt.StandardClaims{
@@ -72,8 +72,8 @@ func ParseToken(token string) (*typings.TempFileConfigInfo, error) {
 		return nil, err
 	}
 	if claims, ok := tokenData.Claims.(*jwtCustomClaims); ok && tokenData.Valid {
-		if claims.FileInfo != (typings.TempFileConfigInfo{}) {
-			return &claims.FileInfo, nil
+		if claims.FileInfo != nil {
+			return claims.FileInfo, nil
 		}
 		return nil, err
 	} else {
@@ -173,9 +173,9 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 
 func GetResponseData(fileConfigInfo *typings.TempFileConfigInfo) map[string]string {
 	return map[string]string{
-		"domainUrl":     conf.Config.StaticPathDomain,
-		"encryptionUrl": "/s/" + fileConfigInfo.EncryptionName,
-		"url":           "/s" + fileConfigInfo.Path + fileConfigInfo.Name + "?a=" + conf.AppList[fileConfigInfo.AppId].EncryptionId,
+		"domainUrl": conf.Config.StaticPathDomain,
+		"shortUrl":  "/s/" + fileConfigInfo.ShortId,
+		"url":       "/s" + fileConfigInfo.ParentFolderPath + fileConfigInfo.Name + "?a=" + conf.AppList[fileConfigInfo.AppId].EncryptionId,
 	}
 }
 

@@ -60,7 +60,7 @@ type StaticFile struct {
 }
 
 func (m *StaticFile) GetCollectionName() string {
-	return "StaticFile"
+	return "StaticFiles"
 }
 
 func (m *StaticFile) Default() error {

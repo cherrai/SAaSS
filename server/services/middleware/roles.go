@@ -11,6 +11,7 @@ import (
 
 type RoleOptionsType struct {
 	CheckApp           bool
+	CheckAppToken      bool
 	BaseUrl            string
 	Authorize          bool
 	RequestEncryption  bool

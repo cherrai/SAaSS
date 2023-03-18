@@ -29,6 +29,11 @@ type ResponseType struct {
 type H map[string]interface{}
 type Any *anypb.Any
 
+func (res *ResponseType) Errors(err error) {
+	if err != nil {
+		res.Error = err.Error()
+	}
+}
 func (res *ResponseType) Call(c *gin.Context) {
 
 	// Log.Info("setResponse", res.GetResponse())
@@ -56,55 +61,20 @@ func (res *ResponseType) GetResponse() *ResponseType {
 
 	switch res.Code {
 	case 200:
+	case 10023:
+		res.Msg = "password required."
+		res.CnMsg = "必须输入密码."
+	case 10022:
+		res.Msg = "incorrect password."
+		res.CnMsg = "密码错误."
 
-	case 10304:
-		res.Msg = "Anonymous user login failed."
-		res.CnMsg = "匿名用户登陆信息错误"
+	case 10021:
+		res.Msg = "Copy or move failed."
+		res.CnMsg = "复制或移动失败"
 
-	case 10303:
-		res.Msg = "Room join failed."
-		res.CnMsg = "房间加入失败"
-
-	case 10302:
-		res.Msg = "Invite code verification failed."
-		res.CnMsg = "邀请码验证失败"
-
-	case 10301:
-		res.Msg = "Failed to create invitation code."
-		res.CnMsg = "创建邀请码失败"
-
-	case 10201:
-		res.Msg = "Failed to send message."
-		res.CnMsg = "发送信息失败"
-
-	case 10106:
-		res.Msg = "Failed to reject friend."
-		res.CnMsg = "好友拒绝失败"
-
-	case 10105:
-		res.Msg = "Non-friends."
-		res.CnMsg = "非好友也"
-
-	case 10104:
-		res.Msg = "Failed to delete friend."
-		res.CnMsg = "好友删除失败"
-
-	case 10103:
-		res.Msg = "Failed to add friend."
-		res.CnMsg = "好友添加失败"
-
-	case 10102:
-		res.Msg = "Friend verification failed."
-		res.CnMsg = "好友数据校验不通过"
-
-	case 10101:
-		res.Msg = "Failed to update friend log status."
-		res.CnMsg = "更新好友添加状态失败"
-
-		// case 10005:
-		// 	res.Msg = "Invalid request."
-		// 	res.CnMsg = "无效请求"
-		//
+	case 10020:
+		res.Msg = "Create folder failed."
+		res.CnMsg = "创建文件夹失败"
 
 	case 10019:
 		res.Msg = "Create file token failed."

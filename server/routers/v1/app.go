@@ -5,15 +5,26 @@ import (
 	"github.com/cherrai/SAaSS/services/middleware"
 )
 
-func (r Routerv1) InitChunkUpload() {
-	chunkUpload := new(controllersV1.ChunkUploadController)
+func (r Routerv1) IniApp() {
+	fc := new(controllersV1.AppController)
 
 	role := middleware.RoleMiddlewareOptions{
 		BaseUrl: r.BaseUrl,
 	}
 
 	r.Group.POST(
-		role.SetRole("/chunkupload/create", &middleware.RoleOptionsType{
+		role.SetRole("/app/token/get", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      false,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.GetAppToken)
+
+	r.Group.POST(
+		role.SetRole("/app/userToken/get", &middleware.RoleOptionsType{
 			CheckApp:           true,
 			CheckAppToken:      true,
 			Authorize:          false,
@@ -21,15 +32,6 @@ func (r Routerv1) InitChunkUpload() {
 			ResponseEncryption: false,
 			ResponseDataType:   "json",
 		}),
-		chunkUpload.CreateChunk)
-	r.Group.POST(
-		role.SetRole("/chunkupload/upload", &middleware.RoleOptionsType{
-			CheckApp:           false,
-			Authorize:          true,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		chunkUpload.UploadChunk)
+		fc.GetUserToken)
 
 }

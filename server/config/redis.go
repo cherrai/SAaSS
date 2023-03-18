@@ -11,16 +11,20 @@ var Redisdb *nredis.NRedis
 var BaseKey = "meow-whisper"
 
 var RedisCacheKeys = map[string]*nredis.RedisCacheKeysType{
-	"Token": {
-		Key:        "GetFriend",
+	"AppToken": {
+		Key:        "AppToken",
 		Expiration: 5 * 60 * time.Second,
 	},
-	"GetFriendIds": {
-		Key:        "GetFriendIds",
+	"ParentFolderId": {
+		Key:        "ParentFolderId",
 		Expiration: 5 * 60 * time.Second,
 	},
-	"GetInvitationCode": {
-		Key:        "GetInvitationCode",
+	"UserToken": {
+		Key:        "UserToken",
 		Expiration: 5 * 60 * time.Second,
+	},
+	"TemporaryAccessToken": {
+		Key:        "TemporaryAccessToken",
+		Expiration: 30 * 60 * time.Second,
 	},
 }

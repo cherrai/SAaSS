@@ -65,6 +65,9 @@ func main() {
 	}, conf.BaseKey, log)
 	conf.Redisdb.CreateKeys(conf.RedisCacheKeys)
 
+	// ntimer.SetTimeout(func() {
+	// 	log.Info(shortuuid.New(), nshortid.GetSpecifiedRandomString("ABCDEFG", 2), "2ed37db4105aa4cced6b962be06249c9")
+	// }, 1000)
 	// Connect to mongodb.
 	mongodb.ConnectMongoDB(conf.Config.Mongodb.Currentdb.Uri, conf.Config.Mongodb.Currentdb.Name)
 

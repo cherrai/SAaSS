@@ -5,15 +5,136 @@ import (
 	"github.com/cherrai/SAaSS/services/middleware"
 )
 
-func (r Routerv1) InitFile() {
-	fc := new(controllersV1.FileController)
+func (r Routerv1) InitFolder() {
+	fc := new(controllersV1.FolderController)
 
 	role := middleware.RoleMiddlewareOptions{
 		BaseUrl: r.BaseUrl,
 	}
 
+	r.Group.POST(
+		role.SetRole("/folder/new", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.NewFolder)
+
+	r.Group.POST(
+		role.SetRole("/folder/rename", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.RenameFolder)
+
+	r.Group.POST(
+		role.SetRole("/folder/moveToTrash", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.MoveFoldersToTrash)
+
+	// r.Group.POST(
+	// 	role.SetRole("/folder/rootPathToken/get", &middleware.RoleOptionsType{
+	// 		CheckApp:           true,
+	// 		CheckAppToken:      true,
+	// 		Authorize:          false,
+	// 		RequestEncryption:  false,
+	// 		ResponseEncryption: false,
+	// 		ResponseDataType:   "json",
+	// 	}),
+	// 	fc.GetRootFolderToken)
+
+	r.Group.POST(
+		role.SetRole("/folder/restore", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.RestoreFolder)
+
+	r.Group.POST(
+		role.SetRole("/folder/delete", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.DeleteFolders)
+
+	r.Group.POST(
+		role.SetRole("/folder/share/set", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.SetFolderSharing)
+
+	r.Group.POST(
+		role.SetRole("/folder/password/set", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.SetFolderPassword)
+
+	r.Group.POST(
+		role.SetRole("/folder/copy", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.CopyFolder)
+
+	r.Group.POST(
+		role.SetRole("/folder/move", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.MoveFolder)
+
 	r.Group.GET(
-		role.SetRole("/file/shortid/get", &middleware.RoleOptionsType{
+		role.SetRole("/folder/list/get", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.GerFolderList)
+
+	r.Group.GET(
+		role.SetRole("/folder/shortid/get", &middleware.RoleOptionsType{
 			CheckApp:           false,
 			CheckAppToken:      false,
 			Authorize:          false,
@@ -21,130 +142,10 @@ func (r Routerv1) InitFile() {
 			ResponseEncryption: false,
 			ResponseDataType:   "json",
 		}),
-		fc.GetFileByShortId)
-
-	r.Group.POST(
-		role.SetRole("/file/moveToTrash", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.MoveFilesToTrash)
-
-	r.Group.POST(
-		role.SetRole("/file/restore", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.RestoreFile)
-
-	r.Group.POST(
-		role.SetRole("/file/delete", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.DeleteFiles)
-
-	r.Group.POST(
-		role.SetRole("/file/rename", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.RenameFile)
-
-	r.Group.POST(
-		role.SetRole("/file/share/set", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.SetFileSharing)
-
-	r.Group.POST(
-		role.SetRole("/file/password/set", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.SetFilePassword)
-
-	r.Group.POST(
-		role.SetRole("/file/passwordToken/get", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.GetPasswordToken)
-
-	r.Group.POST(
-		role.SetRole("/file/copy", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.CopyFile)
-
-	r.Group.POST(
-		role.SetRole("/file/move", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.MoveFile)
+		fc.GetFolderByShortId)
 
 	r.Group.GET(
-		role.SetRole("/file/get/urls", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.GetUrls)
-	r.Group.GET(
-		role.SetRole("/file/list/get", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.GetFileList)
-
-	r.Group.GET(
-		role.SetRole("/file/list/shortid/get", &middleware.RoleOptionsType{
+		role.SetRole("/folder/list/shortid/get", &middleware.RoleOptionsType{
 			CheckApp:           false,
 			CheckAppToken:      false,
 			Authorize:          false,
@@ -152,10 +153,10 @@ func (r Routerv1) InitFile() {
 			ResponseEncryption: false,
 			ResponseDataType:   "json",
 		}),
-		fc.GetFileListWithShortId)
+		fc.GetFolderListWithShortId)
 
 	r.Group.GET(
-		role.SetRole("/file/recent/list/get", &middleware.RoleOptionsType{
+		role.SetRole("/folder/recyclebin/list/get", &middleware.RoleOptionsType{
 			CheckApp:           true,
 			CheckAppToken:      true,
 			Authorize:          false,
@@ -163,16 +164,6 @@ func (r Routerv1) InitFile() {
 			ResponseEncryption: false,
 			ResponseDataType:   "json",
 		}),
-		fc.GetRecentFiles)
-	r.Group.GET(
-		role.SetRole("/file/recyclebin/list/get", &middleware.RoleOptionsType{
-			CheckApp:           true,
-			CheckAppToken:      true,
-			Authorize:          false,
-			RequestEncryption:  false,
-			ResponseEncryption: false,
-			ResponseDataType:   "json",
-		}),
-		fc.GetRecyclebinFiles)
+		fc.GetRecyclebinFolderList)
 
 }

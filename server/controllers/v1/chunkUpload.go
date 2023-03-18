@@ -17,7 +17,6 @@ import (
 	"github.com/cherrai/SAaSS/services/methods"
 	"github.com/cherrai/SAaSS/services/response"
 	"github.com/cherrai/SAaSS/services/typings"
-	"github.com/cherrai/nyanyago-utils/cipher"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nint"
 	"github.com/cherrai/nyanyago-utils/nlog"
@@ -41,7 +40,26 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	var res response.ResponseType
 	res.Code = 200
 
-	appId := c.PostForm("appId")
+	appId := c.GetString("appId")
+	userId := c.GetString("userId")
+	rootPath := nstrings.StringOr(c.PostForm("rootPath"), "/")
+
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		rootPath = t.RootPath
+	}
+
+	allowShare := nint.ToInt64(c.PostForm("allowShare"))
+	shareUsers := []string{}
+
+	log.Info("ShareUsers", shareUsers)
+	log.Info("ShareUsers", c.PostForm("shareUsers"))
+	log.Info("ShareUsers", c.PostFormMap("shareUsers"))
+
+	for _, v := range c.PostFormMap("shareUsers") {
+		shareUsers = append(shareUsers, v)
+	}
 	// appKey := c.PostForm("appKey")
 	// typestr := c.PostForm("type")
 	fileName := c.PostForm("fileName")
@@ -66,11 +84,32 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	fileNameWithSuffix := path.Base(fileInfo["name"])
 	fileType := path.Ext(fileNameWithSuffix)
 	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
+
+	parentFolderPath := path.Join(rootPath, c.PostForm("path"))
+	parentFolderId, err := folderDbx.GetParentFolderId(appId, parentFolderPath, true, userId)
+	if err != nil {
+		res.Code = 10016
+		res.Error = err.Error()
+		res.Call(c)
+		return
+	}
+
+	shortId, err := fileDbx.GetShortId(9)
+	if err != nil {
+		res.Code = 10016
+		res.Error = err.Error()
+		res.Call(c)
+		return
+	}
+
 	fileConfigInfo := typings.TempFileConfigInfo{
-		AppId:          appId,
-		Name:           fileName,
-		EncryptionName: strings.ToLower(cipher.MD5(fileInfo["hash"] + appId + fileInfo["size"] + nstrings.ToString(time.Now().Unix()))),
-		Path:           c.PostForm("path"),
+		AppId:   appId,
+		Name:    fileName,
+		ShortId: shortId,
+		// EncryptionName:   strings.ToLower(cipher.MD5(fileInfo["hash"] + appId + fileInfo["size"] + nstrings.ToString(time.Now().Unix()))),
+		RootPath:         rootPath,
+		ParentFolderPath: parentFolderPath,
+		ParentFolderId:   parentFolderId,
 		// StaticFolderPath: strings.ToLower("./static/storage" +
 		// 	"/" + time.Now().Format("2006/01/02")),
 		// StaticFileName:      strings.ToLower(cipher.MD5(fileInfo["hash"]+fileInfo["size"]) + fileType),
@@ -82,7 +121,6 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		ExpirationTime: nint.ToInt64(c.PostForm("expirationTime")),
 		VisitCount:     nint.ToInt64(c.PostForm("visitCount")),
 		Password:       c.PostForm("password"),
-
 		FileInfo: typings.FileInfo{
 			Name:         fileNameOnly,
 			Size:         nint.ToInt64(fileInfo["size"]),
@@ -91,18 +129,24 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			LastModified: nint.ToInt64(fileInfo["lastModified"]),
 			Hash:         fileInfo["hash"],
 		},
+		UserId:     userId,
+		AllowShare: allowShare,
+		ShareUsers: shareUsers,
 	}
 
-	err := validation.ValidateStruct(
+	if err = validation.ValidateStruct(
 		&fileConfigInfo,
 		validation.Parameter(&fileConfigInfo.Name, validation.Required()),
-		validation.Parameter(&fileConfigInfo.Path, validation.Required()),
+		validation.Parameter(&fileConfigInfo.ParentFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.TempFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.TempChuckFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.ChunkSize, validation.Type("int64"), validation.Required(), validation.Enum([]int64{16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024, 1024 * 1024}), validation.GreaterEqual(1)),
+		validation.Parameter(&fileConfigInfo.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&fileConfigInfo.AllowShare, validation.Type("int64"), validation.Enum([]int64{2, 1, -1}), validation.Required()),
+		// validation.Parameter(&fileConfigInfo.ShareUsers, validation.Required()),
+		validation.Parameter(&fileConfigInfo.RootPath, validation.Type("string"), validation.Required()),
 		// validation.Parameter(&fileConfigInfo.Type, validation.Type("string"), validation.Required(), validation.Enum([]string{"Image", "Video", "Audio", "Text", "File"})),
-	)
-	if err != nil {
+	); err != nil {
 		res.Error = err.Error()
 		res.Code = 10002
 		res.Call(c)
@@ -137,7 +181,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	不存在则重新上传
 
 	*/
-	file, err := fileDbx.GetFileWithFileInfo(fileConfigInfo.AppId, fileConfigInfo.Path, fileConfigInfo.Name)
+	file, err := fileDbx.GetFileWithFileInfo(fileConfigInfo.AppId, fileConfigInfo.ParentFolderPath, fileConfigInfo.Name, userId)
 	log.Info("file", file)
 	if err != nil {
 		res.Error = err.Error()
@@ -167,21 +211,22 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	log.Info("staticFilesIsExist", staticFilesIsExist)
 	if staticFilesIsExist {
 		// 内容存在则更新
+
 		if file != nil && file.Hash != "" {
 			// 更新内容到最新状态
 			if file.Hash != fileConfigInfo.FileInfo.Hash {
-				file.HashHistory = append(file.HashHistory, models.HashHistory{
+				file.HashHistory = append(file.HashHistory, &models.HashHistory{
 					Hash: file.Hash,
 				})
 				file.Hash = fileConfigInfo.FileInfo.Hash
 			}
 			file.Status = 1
 			file.DeleteTime = -1
-			file.DeadlineInRecycleBin = -1
 			file.AvailableRange.VisitCount = fileConfigInfo.VisitCount
 			file.AvailableRange.Password = fileConfigInfo.Password
+			file.AvailableRange.AllowShare = fileConfigInfo.AllowShare
 			file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
-			fileConfigInfo.EncryptionName = file.EncryptionName
+			fileConfigInfo.ShortId = file.ShortId
 
 			_, err := fileDbx.UpdateFile(file)
 			if err != nil {
@@ -199,21 +244,9 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		} else {
 			// 内容不存在则创建
 			// appId 不一样
-			file := models.File{
-				AppId:          fileConfigInfo.AppId,
-				EncryptionName: fileConfigInfo.EncryptionName,
-				FileName:       fileConfigInfo.Name,
-				Path:           fileConfigInfo.Path,
-				Status:         1,
-				AvailableRange: models.FileAvailableRange{
-					VisitCount:     fileConfigInfo.VisitCount,
-					ExpirationTime: fileConfigInfo.ExpirationTime,
-					Password:       fileConfigInfo.Password,
-				},
-				Hash: fileConfigInfo.FileInfo.Hash,
-			}
-			_, err := fileDbx.SaveFile(&file)
-			log.Info("SaveFile", err)
+
+			_, err := fc.SaveFile(&fileConfigInfo)
+
 			if err != nil {
 				res.Code = 10016
 				res.Error = err.Error()
@@ -228,8 +261,8 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			return
 		}
 	} else {
-		if file != nil && file.Hash != "" && fileConfigInfo.Path == file.Path && fileConfigInfo.Name == file.FileName {
-			fileConfigInfo.EncryptionName = file.EncryptionName
+		if file != nil && file.Hash != "" && fileConfigInfo.ParentFolderId == file.ParentFolderId && fileConfigInfo.Name == file.FileName {
+			fileConfigInfo.ShortId = file.ShortId
 		}
 	}
 
@@ -258,7 +291,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 	// 获取token
 	// log.Info("configInfo", configInfo)
-	token, err := methods.GetToken(fileConfigInfo)
+	token, err := methods.GetToken(&fileConfigInfo)
 	if err != nil {
 		res.Error = err.Error()
 		res.Code = 10001
@@ -276,6 +309,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// 获取上次的传输进度
 	totalSize, uploadedOffset := methods.GetUploadedOffset(&fileConfigInfo)
 	err = conf.Redisdb.Set("file_"+fileInfo["hash"]+"_totalsize", totalSize, 5*60*time.Second)
+	log.Info("cccccccccccc", totalSize, uploadedOffset)
 	if err != nil {
 		res.Error = err.Error()
 		res.Code = 10001
@@ -379,9 +413,9 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		res.Call(c)
 		return
 	}
-	// log.Info(totalSizeInt64+file.Size, fileConfigInfo.Size)
+	log.Info(totalSizeInt64, file.Size, totalSizeInt64+file.Size, fileConfigInfo.FileInfo.Size)
 	// 已经全部传完
-	if totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
+	if totalSizeInt64 == file.Size || totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
 
 		code, err := methods.MergeFiles(fileConfigInfo)
 		log.Info("MergeFiles", code, err != nil)
@@ -394,21 +428,8 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		if code == 200 {
 			// 创建静态文件
 
-			file := models.File{
-				AppId:          fileConfigInfo.AppId,
-				EncryptionName: fileConfigInfo.EncryptionName,
-				FileName:       fileConfigInfo.Name,
-				Path:           fileConfigInfo.Path,
-				Status:         1,
-				AvailableRange: models.FileAvailableRange{
-					VisitCount:     fileConfigInfo.VisitCount,
-					ExpirationTime: fileConfigInfo.ExpirationTime,
-					Password:       fileConfigInfo.Password,
-				},
-				HashHistory: []models.HashHistory{},
-				Hash:        fileConfigInfo.FileInfo.Hash,
-			}
-			saveFile, err := fileDbx.SaveFile(&file)
+			saveFile, err := fc.SaveFile(fileConfigInfo)
+
 			log.Info("saveFile", fileConfigInfo.Password, saveFile, err)
 			if err != nil {
 				res.Code = 10016
@@ -416,11 +437,10 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 				res.Call(c)
 				return
 			}
-			fileConfigInfo.EncryptionName = saveFile.EncryptionName
+			fileConfigInfo.ShortId = saveFile.ShortId
 			res.Data = methods.GetResponseData(fileConfigInfo)
 		}
 		res.Code = code
-		res.Code = 200
 		res.Call(c)
 		return
 	} else {
@@ -450,5 +470,39 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	// }
 
 	res.Code = 200
+	// res.Data = methods.GetResponseData(fileConfigInfo)
 	res.Call(c)
+}
+
+func (fc *ChunkUploadController) SaveFile(fConfig *typings.TempFileConfigInfo) (*models.File, error) {
+	su := []*models.AvailableRangeShareUsers{}
+	for _, v := range fConfig.ShareUsers {
+		su = append(su, &models.AvailableRangeShareUsers{
+			Uid:        v,
+			CreateTime: time.Now().Unix(),
+		})
+	}
+
+	file := models.File{
+		AppId:          fConfig.AppId,
+		ShortId:        fConfig.ShortId,
+		FileName:       fConfig.Name,
+		ParentFolderId: fConfig.ParentFolderId,
+		Status:         1,
+		AvailableRange: models.FileAvailableRange{
+			VisitCount:     fConfig.VisitCount,
+			ExpirationTime: fConfig.ExpirationTime,
+			Password:       fConfig.Password,
+			AuthorId:       fConfig.UserId,
+			AllowShare:     fConfig.AllowShare,
+			ShareUsers:     su,
+		},
+		Hash: fConfig.FileInfo.Hash,
+	}
+	_, err := fileDbx.SaveFile(&file)
+	log.Info("SaveFile", err)
+	if err != nil {
+		return nil, err
+	}
+	return &file, nil
 }

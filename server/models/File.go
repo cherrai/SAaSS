@@ -12,12 +12,27 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type AvailableRangeShareUsers struct {
+	// 如果有个uid是"AllUser",则是所有人都不可见
+	// 非所有人则需要提供一个携带uid的字符串，每次都从SAaSS获取，有效时间5分钟
+	Uid        string `bson:"uid" json:"uid"`
+	CreateTime int64  `bson:"createTime" json:"createTime"`
+}
+
 type FileAvailableRange struct {
 	// -1 就是不限制 非-1则就是要和隔壁的比较大小
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
 	// ExpirationTime Unix timestamp
 	ExpirationTime int64  `bson:"expirationTime" json:"expirationTime,omitempty"`
 	Password       string `bson:"password" json:"password,omitempty"`
+	// 创建人
+	AuthorId string `bson:"authorId" json:"authorId,omitempty"`
+	// 是否允许共享
+	// 2 允许编辑 预留
+	// 1 允许下载
+	// -1 私有不允许外部下载（私有的话，也需要检测UID
+	AllowShare int64                       `bson:"allowShare" json:"allowShare,omitempty"`
+	ShareUsers []*AvailableRangeShareUsers `bson:"shareUsers" json:"shareUsers,omitempty"`
 }
 type FileUsage struct {
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
@@ -31,17 +46,18 @@ type File struct {
 	Id    primitive.ObjectID `bson:"_id" json:"id,omitempty"`
 	AppId string             `bson:"appId" json:"appId,omitempty"`
 	// 加密文件名
-	EncryptionName string `bson:"encryptionName" json:"encryptionName,omitempty"`
+	ShortId string `bson:"shortId" json:"shortId,omitempty"`
 	// 云盘文件名
 	FileName string `bson:"fileName" json:"fileName,omitempty"`
 	// 云盘存储与访问路径
-	Path string `bson:"path" json:"path,omitempty"`
+	// Path string `bson:"path" json:"path,omitempty"`
+	ParentFolderId primitive.ObjectID `bson:"parentFolderId" json:"parentFolderId,omitempty"`
 	// Hash
 	Hash string `bson:"hash" json:"hash,omitempty"`
 	// Label
 	Label string `bson:"label" json:"label,omitempty"`
 	// replace update 历史记录
-	HashHistory []HashHistory `bson:"hashHistory" json:"hashHistory,omitempty"`
+	HashHistory []*HashHistory `bson:"hashHistory" json:"hashHistory,omitempty"`
 
 	AvailableRange FileAvailableRange `bson:"availableRange" json:"availableRange,omitempty"`
 	Usage          FileUsage          `bson:"usage" json:"usage,omitempty"`
@@ -55,17 +71,17 @@ type File struct {
 	// CreateTime Unix timestamp
 	CreateTime int64 `bson:"createTime" json:"createTime,omitempty"`
 	// UpdateTime Unix timestamp
-	UpdateTime int64 `bson:"updateTime" json:"updateTime,omitempty"`
+	LastUpdateTime int64 `bson:"lastUpdateTime" json:"lastUpdateTime,omitempty"`
 	// DeleteTime Unix timestamp
 	DeleteTime int64 `bson:"deleteTime" json:"deleteTime,omitempty"`
-	// DeadlineInRecycleBin Unix timestamp
-	DeadlineInRecycleBin int64 `bson:"deadlineInRecycleBin" json:"deadlineInRecycleBin,omitempty"`
+	// // DeadlineInRecycleBin Unix timestamp
+	// DeadlineInRecycleBin int64 `bson:"deadlineInRecycleBin" json:"deadlineInRecycleBin,omitempty"`
 	// LastDownloadTime Unix timestamp
 	LastDownloadTime int64 `bson:"lastDownloadTime" json:"lastDownloadTime,omitempty"`
 }
 
 func (m *File) GetCollectionName() string {
-	return "File"
+	return "Files"
 }
 
 func (m *File) Default() error {
@@ -79,15 +95,18 @@ func (m *File) Default() error {
 	if m.CreateTime == 0 {
 		m.CreateTime = unixTimeStamp
 	}
-	if m.UpdateTime == 0 {
-		m.UpdateTime = unixTimeStamp
+	if m.LastUpdateTime == 0 {
+		m.LastUpdateTime = unixTimeStamp
 	}
 	if m.DeleteTime == 0 {
 		m.DeleteTime = -1
 	}
-	if m.DeadlineInRecycleBin == 0 {
-		m.DeadlineInRecycleBin = -1
+	if m.HashHistory == nil {
+		m.HashHistory = []*HashHistory{}
 	}
+	// if m.DeadlineInRecycleBin == 0 {
+	// 	m.DeadlineInRecycleBin = -1
+	// }
 	if m.LastDownloadTime == 0 {
 		m.LastDownloadTime = -1
 	}
@@ -98,7 +117,6 @@ func (m *File) Default() error {
 		m.AvailableRange.ExpirationTime = -1
 	}
 
-	log.Info("mmmm", m.Status)
 	if err := m.Validate(); err != nil {
 		return errors.New(m.GetCollectionName() + " Validate: " + err.Error())
 	}
@@ -114,9 +132,9 @@ func (m *File) Validate() error {
 	err := validation.ValidateStruct(
 		m,
 		validation.Parameter(&m.AppId, validation.Required()),
-		validation.Parameter(&m.EncryptionName, validation.Required()),
+		validation.Parameter(&m.ShortId, validation.Required()),
 		validation.Parameter(&m.FileName, validation.Required()),
-		validation.Parameter(&m.Path, validation.Required()),
+		// validation.Parameter(&m.ParentFolderId, validation.Required()),
 		validation.Parameter(&m.Hash, validation.Required()),
 		validation.Parameter(&m.Status, validation.Enum([]int64{1, -1, -2})),
 		validation.Parameter(&m.CreateTime, validation.Required()),
