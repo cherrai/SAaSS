@@ -46,6 +46,17 @@ func (r Routerv1) InitFile() {
 		fc.RestoreFile)
 
 	r.Group.POST(
+		role.SetRole("/file/checkExists", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.CheckFileExists)
+
+	r.Group.POST(
 		role.SetRole("/file/delete", &middleware.RoleOptionsType{
 			CheckApp:           true,
 			CheckAppToken:      true,

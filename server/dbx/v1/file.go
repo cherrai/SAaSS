@@ -206,6 +206,10 @@ func (fd *FileDbx) MoveFilesToTrash(appId, path string, fileNames []string, auth
 }
 
 func (fd *FileDbx) Restore(appId, path string, fileNames []string, authorId string) error {
+	err := fd.DeleteFiles(appId, path, fileNames, authorId, []int64{1, 0})
+	if err != nil {
+		return err
+	}
 	parentFolderId, err := folderDbx.GetParentFolderId(appId, path, false, authorId)
 	if err != nil {
 		return err
@@ -246,7 +250,7 @@ func (fd *FileDbx) Restore(appId, path string, fileNames []string, authorId stri
 	return nil
 }
 
-func (fd *FileDbx) DeleteFiles(appId, path string, fileNames []string, authorId string) error {
+func (fd *FileDbx) DeleteFiles(appId, path string, fileNames []string, authorId string, status []int64) error {
 	parentFolderId, err := folderDbx.GetParentFolderId(appId, path, false, authorId)
 	if err != nil {
 		return err
@@ -260,6 +264,11 @@ func (fd *FileDbx) DeleteFiles(appId, path string, fileNames []string, authorId 
 			},
 			{
 				"parentFolderId": parentFolderId,
+			},
+			{
+				"status": bson.M{
+					"$in": status,
+				},
 			},
 			{
 				"fileName": bson.M{
@@ -375,7 +384,7 @@ func (fd *FileDbx) CopyFile(appId, authorId, path string, fileNames []string, ne
 		v.Id = primitive.NilObjectID
 		v.ParentFolderId = newParentFolderId
 		_, err = fd.SaveFile(v)
-		log.Error(err)
+		// log.Error(err)
 		if err != nil {
 			return err
 		}
@@ -389,7 +398,7 @@ func (fd *FileDbx) MoveFile(appId, authorId, path string, fileNames []string, ne
 		return err
 	}
 
-	return fd.DeleteFiles(appId, path, fileNames, authorId)
+	return fd.DeleteFiles(appId, path, fileNames, authorId, []int64{1, 0})
 }
 
 type GetFileListByPathType struct {
@@ -917,6 +926,8 @@ func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 		getFile.AvailableRange.VisitCount = file.AvailableRange.VisitCount
 		getFile.AvailableRange.ExpirationTime = file.AvailableRange.ExpirationTime
 		getFile.AvailableRange.Password = file.AvailableRange.Password
+		getFile.AvailableRange.AllowShare = file.AvailableRange.AllowShare
+		getFile.AvailableRange.ShareUsers = file.AvailableRange.ShareUsers
 		if getFile.Hash != file.Hash {
 			getFile.HashHistory = append(getFile.HashHistory, &models.HashHistory{
 				Hash: getFile.Hash,

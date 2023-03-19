@@ -777,7 +777,7 @@ func (fd *FolderDbx) DeleteFolders(appId, authorId, parentPath string, folderNam
 			fileNames = append(fileNames, v.FileName)
 		}
 		// log.Info(path.Join(parentPath, v), files, fileNames)
-		err = fileDbx.DeleteFiles(appId, path.Join(parentPath, v), fileNames, authorId)
+		err = fileDbx.DeleteFiles(appId, path.Join(parentPath, v), fileNames, authorId, []int64{1, 0})
 		if err != nil {
 			return err
 		}

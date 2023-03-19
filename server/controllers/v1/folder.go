@@ -565,6 +565,71 @@ func (dc *FolderController) MoveFoldersToTrash(c *gin.Context) {
 	res.Call(c)
 }
 
+func (dc *FolderController) CheckFolderExists(c *gin.Context) {
+	var res response.ResponseType
+	res.Code = 200
+
+	data := struct {
+		AppId       string
+		RootPath    string
+		UserId      string
+		ParentPath  string
+		FolderNames map[string]string
+	}{
+		AppId:       c.GetString("appId"),
+		UserId:      c.GetString("userId"),
+		ParentPath:  c.PostForm("parentPath"),
+		FolderNames: c.PostFormMap("folderNames"),
+		RootPath:    c.PostForm("rootPath"),
+	}
+
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		data.RootPath = t.RootPath
+	}
+
+	var err error
+	// 3、验证参数
+
+	if err = validation.ValidateStruct(
+		&data,
+		validation.Parameter(&data.AppId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&data.RootPath, validation.Type("string"), validation.Required()),
+		validation.Parameter(&data.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&data.ParentPath, validation.Type("string"), validation.Required()),
+		validation.Parameter(&data.FolderNames, validation.Required()),
+	); err != nil {
+		res.Errors(err)
+		res.Code = 10002
+		res.Call(c)
+		return
+	}
+	data.RootPath = path.Join("/", data.RootPath)
+
+	folderNames := []string{}
+	for _, v := range data.FolderNames {
+		folderNames = append(folderNames, v)
+	}
+	log.Info("folderNames", folderNames)
+	folders, err := folderDbx.GetFolderListByFolderNames(data.AppId, path.Join(data.RootPath, data.ParentPath), folderNames, data.UserId)
+	if err != nil {
+		res.Errors(err)
+		res.Code = 10001
+		res.Call(c)
+		return
+	}
+	list := []string{}
+	for _, v := range folders {
+		list = append(list, v.FolderName)
+	}
+	res.Data = map[string]interface{}{
+		"list":  list,
+		"total": len(list),
+	}
+	res.Call(c)
+}
+
 func (dc *FolderController) RestoreFolder(c *gin.Context) {
 	var res response.ResponseType
 	res.Code = 200
@@ -981,8 +1046,10 @@ func (dc *FolderController) GetRecyclebinFolderList(c *gin.Context) {
 		validation.Parameter(&data.UserId, validation.Type("string"), validation.Required()),
 		validation.Parameter(&data.RootPath, validation.Type("string"), validation.Required()),
 		validation.Parameter(&data.Path, validation.Type("string"), validation.Required()),
-		validation.Parameter(&data.PageNum, validation.Type("int64"), validation.Required()),
-		validation.Parameter(&data.PageSize, validation.Type("int64"), validation.Required()),
+		validation.Parameter(&data.PageNum, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.Required()),
+		validation.Parameter(&data.PageSize, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
 	); err != nil {
 		res.Errors(err)
 		res.Code = 10002

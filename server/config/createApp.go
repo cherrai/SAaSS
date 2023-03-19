@@ -3,12 +3,12 @@ package conf
 import (
 	"encoding/json"
 	"os"
-	"strings"
 
 	"github.com/cherrai/SAaSS/services/typings"
-	"github.com/cherrai/nyanyago-utils/cipher"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nlog"
+	"github.com/cherrai/nyanyago-utils/nshortid"
+	"github.com/cherrai/nyanyago-utils/nstrings"
 	"github.com/google/uuid"
 )
 
@@ -51,11 +51,26 @@ func readFile() {
 			Name:         v.Name,
 			AppId:        v.AppId,
 			AppKey:       v.AppKey,
-			EncryptionId: strings.ToLower(cipher.MD5(v.AppId + "saass")),
+			EncryptionId: nstrings.StringOr(v.EncryptionId, getShortId(conf.AppList, 9)),
 		}
 	}
 	AppList = conf.AppList
 	// log.Info("AppList", AppList)
+}
+
+func getShortId(appList map[string]typings.AppListItem, digits int) string {
+	id := nshortid.GetShortId(digits)
+	flag := false
+	for _, v := range appList {
+		if v.EncryptionId == id {
+			flag = true
+			break
+		}
+	}
+	if flag {
+		return getShortId(appList, digits)
+	}
+	return id
 }
 
 func CreateServerId() {
@@ -80,7 +95,7 @@ func CreateApp() {
 			AppList[appId] = typings.AppListItem{
 				Name:         v.Name,
 				AppId:        appId,
-				EncryptionId: strings.ToLower(cipher.MD5(appId + "saass")),
+				EncryptionId: getShortId(AppList, 9),
 				AppKey:       appKey,
 			}
 		}

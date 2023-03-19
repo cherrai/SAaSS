@@ -225,6 +225,13 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			file.AvailableRange.VisitCount = fileConfigInfo.VisitCount
 			file.AvailableRange.Password = fileConfigInfo.Password
 			file.AvailableRange.AllowShare = fileConfigInfo.AllowShare
+			file.AvailableRange.ShareUsers = []*models.AvailableRangeShareUsers{}
+			for _, v := range fileConfigInfo.ShareUsers {
+				file.AvailableRange.ShareUsers = append(file.AvailableRange.ShareUsers, &models.AvailableRangeShareUsers{
+					Uid:        v,
+					CreateTime: time.Now().Unix(),
+				})
+			}
 			file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
 			fileConfigInfo.ShortId = file.ShortId
 
@@ -482,6 +489,8 @@ func (fc *ChunkUploadController) SaveFile(fConfig *typings.TempFileConfigInfo) (
 			CreateTime: time.Now().Unix(),
 		})
 	}
+
+	log.Info("su", su)
 
 	file := models.File{
 		AppId:          fConfig.AppId,

@@ -57,6 +57,17 @@ func (r Routerv1) InitFolder() {
 	// 	fc.GetRootFolderToken)
 
 	r.Group.POST(
+		role.SetRole("/folder/checkExists", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.CheckFolderExists)
+
+	r.Group.POST(
 		role.SetRole("/folder/restore", &middleware.RoleOptionsType{
 			CheckApp:           true,
 			CheckAppToken:      true,

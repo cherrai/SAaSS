@@ -83,6 +83,77 @@ func (dc *FileController) MoveFilesToTrash(c *gin.Context) {
 	res.Call(c)
 }
 
+func (dc *FileController) CheckFileExists(c *gin.Context) {
+	// 1、 创建请求体
+	var res response.ResponseType
+	res.Code = 200
+
+	// 2、获取参数
+
+	params := struct {
+		AppId     string
+		Path      string
+		UserId    string
+		FileNames map[string]string
+		RootPath  string
+	}{
+		AppId:     c.GetString("appId"),
+		Path:      c.PostForm("path"),
+		UserId:    c.GetString("userId"),
+		FileNames: c.PostFormMap("fileNames"),
+		RootPath:  c.PostForm("rootPath"),
+	}
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		params.RootPath = t.RootPath
+	}
+
+	// 3、校验参数
+	if err := validation.ValidateStruct(
+		&params,
+		validation.Parameter(&params.AppId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.FileNames, validation.Required()),
+		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
+	); err != nil {
+		res.Error = err.Error()
+		res.Code = 10002
+		res.Call(c)
+		return
+	}
+
+	// 4、操作数据库
+	fns := []string{}
+	for _, v := range params.FileNames {
+		fns = append(fns, v)
+	}
+	parentFolderId, err := folderDbx.GetParentFolderId(params.AppId, path.Join(params.RootPath, params.Path), false, params.UserId)
+	if err != nil {
+		res.Errors(err)
+		res.Code = 10001
+		res.Call(c)
+		return
+	}
+	files, err := fileDbx.GetFileLisByParentFolderIdOrFileNames(params.AppId, parentFolderId, fns)
+	if err != nil {
+		res.Errors(err)
+		res.Code = 10001
+		res.Call(c)
+		return
+	}
+	list := []string{}
+	for _, v := range files.List {
+		list = append(list, v.FileName)
+	}
+	res.Data = map[string]interface{}{
+		"list":  list,
+		"total": len(list),
+	}
+	res.Call(c)
+}
+
 func (dc *FileController) RestoreFile(c *gin.Context) {
 	// 1、 创建请求体
 	var res response.ResponseType
@@ -185,7 +256,7 @@ func (dc *FileController) DeleteFiles(c *gin.Context) {
 	for _, v := range params.FileNames {
 		fns = append(fns, v)
 	}
-	if err := fileDbx.DeleteFiles(params.AppId, path.Join(params.RootPath, params.Path), fns, params.UserId); err != nil {
+	if err := fileDbx.DeleteFiles(params.AppId, path.Join(params.RootPath, params.Path), fns, params.UserId, []int64{-1}); err != nil {
 		res.Error = err.Error()
 		res.Code = 10002
 		res.Call(c)
@@ -1069,8 +1140,10 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
-		validation.Parameter(&params.PageNum, validation.Type("int64"), validation.Required()),
-		validation.Parameter(&params.PageSize, validation.Type("int64"), validation.Required()),
+		validation.Parameter(&params.PageNum, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.Required()),
+		validation.Parameter(&params.PageSize, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
 	); err != nil {
 		res.Error = err.Error()
 		res.Code = 10002
@@ -1240,8 +1313,10 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
-		validation.Parameter(&params.PageNum, validation.Type("int64"), validation.Required()),
-		validation.Parameter(&params.PageSize, validation.Type("int64"), validation.Required()),
+		validation.Parameter(&params.PageNum, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.Required()),
+		validation.Parameter(&params.PageSize, validation.Type("int64"),
+			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
 	); err != nil {
 		res.Error = err.Error()
 		res.Code = 10002
