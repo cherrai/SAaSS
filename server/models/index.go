@@ -1,7 +1,7 @@
 package models
 
-import "github.com/cherrai/nyanyago-utils/nlog"
+import conf "github.com/cherrai/SAaSS/config"
 
 var (
-	log = nlog.New()
+	log = conf.Log
 )

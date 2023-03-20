@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	log = nlog.New()
+	log = conf.Log
 )
 
 // 文件到期后根据时间进行删除 未做
@@ -74,5 +74,4 @@ func main() {
 	methods.Clear()
 
 	gin_service.Init()
-
 }

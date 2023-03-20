@@ -6,10 +6,10 @@ import (
 	"path"
 	"time"
 
+	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nimages"
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nshortid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	log       = nlog.New()
+	log       = conf.Log
 	fileDbx   = FileDbx{}
 	folderDbx = FolderDbx{}
 )
@@ -382,6 +382,11 @@ func (fd *FileDbx) CopyFile(appId, authorId, path string, fileNames []string, ne
 
 	for _, v := range files.List {
 		v.Id = primitive.NilObjectID
+		shortId, err := fileDbx.GetShortId(9)
+		if err != nil {
+			return err
+		}
+		v.ShortId = shortId
 		v.ParentFolderId = newParentFolderId
 		_, err = fd.SaveFile(v)
 		// log.Error(err)

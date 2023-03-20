@@ -3,13 +3,13 @@ package mongodb
 import (
 	"context"
 
-	"github.com/cherrai/nyanyago-utils/nlog"
+	conf "github.com/cherrai/SAaSS/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
-	Log = nlog.New()
+	Log = conf.Log
 )
 var mongoClient *mongo.Client
 var mongoClients map[string]*mongo.Client

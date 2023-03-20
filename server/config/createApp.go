@@ -6,14 +6,9 @@ import (
 
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/nfile"
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nshortid"
 	"github.com/cherrai/nyanyago-utils/nstrings"
 	"github.com/google/uuid"
-)
-
-var (
-	log = nlog.New()
 )
 
 var (

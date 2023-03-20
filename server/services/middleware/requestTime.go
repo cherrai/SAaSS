@@ -1,12 +1,7 @@
 package middleware
 
 import (
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/gin-gonic/gin"
-)
-
-var (
-	log = nlog.New()
 )
 
 func RequestTime() gin.HandlerFunc {

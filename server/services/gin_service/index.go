@@ -9,11 +9,10 @@ import (
 	"github.com/cherrai/SAaSS/routers"
 	"github.com/cherrai/SAaSS/services/middleware"
 
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/gin-gonic/gin"
 )
 
-var log = nlog.New()
+var log = conf.Log
 
 var Router *gin.Engine
 

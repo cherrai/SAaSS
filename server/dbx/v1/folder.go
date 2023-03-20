@@ -657,8 +657,13 @@ func (fd *FolderDbx) CopyFolder(appId, authorId, parentPath string, folderNames 
 	for _, v := range folders {
 		tId := v.Id
 		v.Id = primitive.NilObjectID
+		shortId, err := folderDbx.GetShortId(9)
+		if err != nil {
+			return err
+		}
+		v.ShortId = shortId
 		v.ParentFolderId = newParentFolderId
-		_, err := fd.NewFolder(
+		_, err = fd.NewFolder(
 			appId,
 			v.FolderName,
 			newParentPath,

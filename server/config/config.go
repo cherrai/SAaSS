@@ -7,9 +7,12 @@ import (
 	"time"
 
 	"github.com/cherrai/SAaSS/services/typings"
+	"github.com/cherrai/nyanyago-utils/nlog"
 )
 
 var (
+	Log    = nlog.New()
+	log    = Log
 	Config *typings.Config
 	// 文件到期后根据时间进行删除 未做
 	// []string{"Image", "Video", "Audio", "Text", "File"}
@@ -30,5 +33,8 @@ func GetConfig(configPath string) {
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+	// if Config.Server.Mode == "debug" {
+	// 	// Log = nlog.Nil()
+	// }
 	Config = conf
 }

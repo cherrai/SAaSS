@@ -14,12 +14,11 @@ import (
 	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/nfile"
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/golang-jwt/jwt"
 )
 
 var (
-	log     = nlog.New()
+	log     = conf.Log
 	fileDbx = new(dbxV1.FileDbx)
 )
 

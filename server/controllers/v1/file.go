@@ -684,6 +684,7 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 	}
 	// 4、操作数据库
 	v, err := fileDbx.GetFileWithShortId(params.Id)
+	log.Info("GetFileWithShortId", v, v.AvailableRange.AllowShare, err)
 	if err != nil || v == nil {
 		res.Errors(err)
 		res.Code = 10006
@@ -719,6 +720,7 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 		user := ""
 		passwordToken := ""
 		shortUrl := "/s/" + v.ShortId
+		url := "/s/" + v.FileName + "?sid=" + v.ShortId
 		if v.AvailableRange.Password != "" {
 			if err := validation.ValidateStruct(
 				&params,
@@ -747,6 +749,7 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 				return
 			}
 			shortUrl = shortUrl + "?u=" + user + "&p=" + passwordToken
+			url = url + "&u=" + user + "&p=" + passwordToken
 		}
 		staticFileList, err := fileDbx.GetStaticFileListWithHash([]string{
 			v.Hash,
@@ -783,7 +786,7 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 			"urls": map[string]string{
 				"domainUrl": conf.Config.StaticPathDomain,
 				"shortUrl":  shortUrl,
-				// "url":           "/s" + path.Join(params.Path, v.FileName) + "?a=" + conf.AppList[v.AppId].EncryptionId + "&r=" + params.RootPath,
+				"url":       url,
 			},
 			"fileInfo": map[string]interface{}{
 				"name":         sv.FileInfo.Name,
@@ -1055,8 +1058,12 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 				// 	pd = v.AvailableRange.Password[0:2] + "******" + v.AvailableRange.Password[len(v.AvailableRange.Password)-3:len(v.AvailableRange.Password)]
 				// }
 
+				// shortUrl := "/s/" + v.ShortId
+				// url := "/s/" + v.FileName + "?sid=" + v.ShortId
 				at := methods.GetTemporaryAccessToken(v.ShortId, params.Deadline)
-
+				log.Info(params.Deadline)
+				shortUrl := "/s/" + v.ShortId + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
+				url := "/s/" + v.FileName + "?sid=" + v.ShortId + "&u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
 				tempList = append(tempList, map[string]interface{}{
 					"id":       v.Id,
 					"shortId":  v.ShortId,
@@ -1079,7 +1086,8 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 					"deleteTime":     v.DeleteTime,
 					"urls": map[string]string{
 						"domainUrl": conf.Config.StaticPathDomain,
-						"shortUrl":  "/s/" + v.ShortId + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"],
+						"shortUrl":  shortUrl,
+						"url":       url,
 					},
 					"fileInfo": map[string]interface{}{
 						"name":         sv.FileInfo.Name,
@@ -1632,28 +1640,33 @@ func (dc *FileController) Download(c *gin.Context) {
 	p := c.Request.URL.Path[2:len(c.Request.URL.Path)]
 	filePath := p[strings.LastIndex(p, "/")+1 : len(p)-0]
 	folderPath := p[0 : strings.LastIndex(p, "/")+1]
-	encryptionId := c.Query("a")
+	appEncryptionId := c.Query("a")
+	sid := c.Query("sid")
 	rootPath := c.Query("r")
 	userToken := c.Query("ut")
 	temporaryAccessToken := c.Query("tat")
 	isTAT := false
-
+	shortId := filePath
+	if sid != "" {
+		shortId = sid
+	}
 	if temporaryAccessToken != "" {
 		u := c.Query("u")
-		isTAT = ncredentials.AuthCredentials(u, temporaryAccessToken, filePath)
+		isTAT = ncredentials.AuthCredentials(u, temporaryAccessToken, shortId)
 	}
 
-	log.Info(folderPath, filePath, encryptionId == "")
+	log.Info(folderPath, filePath, appEncryptionId == "")
 	var file *models.File
 	var err error
 	appId := ""
 	appKey := ""
 
-	if folderPath == "/" && encryptionId == "" {
-		shortId := filePath
-		log.Info("shortId", shortId)
+	log.Info("sid", sid)
+	if (folderPath == "/" && appEncryptionId == "") || shortId != "" {
+
+		// log.Info("shortId", shortId)
 		file, err = fileDbx.GetFileWithShortId(shortId)
-		log.Info("file", file)
+		// log.Info("file", file)
 
 		if file == nil || err != nil {
 			c.String(http.StatusNotFound, "")
@@ -1668,7 +1681,7 @@ func (dc *FileController) Download(c *gin.Context) {
 
 	} else {
 		for _, v := range conf.AppList {
-			if v.EncryptionId == encryptionId {
+			if v.EncryptionId == appEncryptionId {
 				appId = v.AppId
 				appKey = v.AppKey
 				break

@@ -5,14 +5,14 @@ import (
 	"reflect"
 	"runtime"
 
+	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/SAaSS/services/response"
 
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	Log = nlog.New()
+	log = conf.Log
 )
 
 func Error() gin.HandlerFunc {
@@ -23,7 +23,7 @@ func Error() gin.HandlerFunc {
 			// fmt.Println("roles1", roles)
 			// fmt.Println("Error mid getRoles", roles.ResponseDataType)
 			if err := recover(); err != nil {
-				Log.Error("<"+c.Request.URL.Path+">", "Gin Error: ", err.(error))
+				log.Error("<"+c.Request.URL.Path+">", "Gin Error: ", err.(error))
 				for i := 2; i < 10; i++ {
 					_, fn, line, _ := runtime.Caller(i)
 					fmt.Println("file:", fn, "line:", line)

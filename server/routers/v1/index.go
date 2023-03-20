@@ -1,12 +1,12 @@
 package routerV1
 
 import (
-	"github.com/cherrai/nyanyago-utils/nlog"
+	conf "github.com/cherrai/SAaSS/config"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	log = nlog.New()
+	log = conf.Log
 )
 
 type Routerv1 struct {

@@ -19,14 +19,13 @@ import (
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/nfile"
 	"github.com/cherrai/nyanyago-utils/nint"
-	"github.com/cherrai/nyanyago-utils/nlog"
 	"github.com/cherrai/nyanyago-utils/nstrings"
 	"github.com/cherrai/nyanyago-utils/validation"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	log = nlog.New()
+	log = conf.Log
 )
 
 var fileDbx = new(dbxV1.FileDbx)
