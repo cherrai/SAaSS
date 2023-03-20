@@ -201,6 +201,9 @@ func (dc *FolderController) GetFolderByShortId(c *gin.Context) {
 			"id":         v.Id,
 			"shortId":    v.ShortId,
 			"folderName": v.FolderName,
+			"availableRange": map[string]interface{}{
+				"authorId": v.AvailableRange.AuthorId,
+			},
 		}
 		res.Code = 10023
 		res.Call(c)

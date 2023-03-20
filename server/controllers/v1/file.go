@@ -704,6 +704,9 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 			"id":       v.Id,
 			"shortId":  v.ShortId,
 			"fileName": v.FileName,
+			"availableRange": map[string]interface{}{
+				"authorId": v.AvailableRange.AuthorId,
+			},
 		}
 		res.Code = 10023
 		res.Call(c)
