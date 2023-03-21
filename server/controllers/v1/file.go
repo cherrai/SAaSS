@@ -1649,10 +1649,7 @@ func (dc *FileController) Download(c *gin.Context) {
 	userToken := c.Query("ut")
 	temporaryAccessToken := c.Query("tat")
 	isTAT := false
-	shortId := filePath
-	if sid != "" {
-		shortId = sid
-	}
+	shortId := nstrings.StringOr(sid, filePath)
 	if temporaryAccessToken != "" {
 		u := c.Query("u")
 		isTAT = ncredentials.AuthCredentials(u, temporaryAccessToken, shortId)
@@ -1664,9 +1661,7 @@ func (dc *FileController) Download(c *gin.Context) {
 	appId := ""
 	appKey := ""
 
-	log.Info("sid", sid)
-	if (folderPath == "/" && appEncryptionId == "") || shortId != "" {
-
+	if (folderPath == "/" && appEncryptionId == "") || sid != "" {
 		// log.Info("shortId", shortId)
 		file, err = fileDbx.GetFileWithShortId(shortId)
 		// log.Info("file", file)
