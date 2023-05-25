@@ -26,7 +26,7 @@ func Init() {
 
 func InitRouter() {
 	// 处理跨域
-	Router.Use(middleware.Cors("*"))
+	Router.Use(middleware.Cors([]string{"*"}))
 	Router.NoMethod(func(ctx *gin.Context) {
 		ctx.String(200, "Meow Whisper!\nNot method.")
 	})

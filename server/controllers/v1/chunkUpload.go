@@ -52,9 +52,9 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	allowShare := nint.ToInt64(c.PostForm("allowShare"))
 	shareUsers := []string{}
 
-	log.Info("ShareUsers", shareUsers)
-	log.Info("ShareUsers", c.PostForm("shareUsers"))
-	log.Info("ShareUsers", c.PostFormMap("shareUsers"))
+	// log.Info("ShareUsers", shareUsers)
+	// log.Info("ShareUsers", c.PostForm("shareUsers"))
+	// log.Info("ShareUsers", c.PostFormMap("shareUsers"))
 
 	for _, v := range c.PostFormMap("shareUsers") {
 		shareUsers = append(shareUsers, v)
