@@ -28,7 +28,7 @@ start() {
   DIR=$(cd $(dirname $0) && pwd)
   cp -r ~/.ssh $DIR
   cp -r ~/.gitconfig $DIR
-  git config --global url."git@github.com:".insteadOf "https://github.com/" 
+  git config --global url."git@github.com:".insteadOf "https://github.com/"
 
   echo "-> 准备构建Docker"
   docker build \
@@ -43,6 +43,7 @@ start() {
 
   docker run \
     -v $DIR/static:/static \
+    -v $DIR/web:/web \
     -v $DIR/conf.json:/conf.json \
     -v $DIR/$configFilePath:/config.json \
     --name=$name \

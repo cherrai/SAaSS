@@ -27,7 +27,7 @@ func clear() {
 	log.Info("------Clear------")
 	clearUnstoredStaticFile("./static/storage")
 	clearUnuserdStaticFile(1)
-	clearEmptyFolder("./static")
+	clearEmptyFolder("./static/storage")
 }
 
 // 删除空文件夹
@@ -35,9 +35,11 @@ func clearEmptyFolder(path string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Error(err)
+		return
 	}
-	if len(files) == 0 {
+	if len(files) == 0 && path != "./static/storage" {
 		os.RemoveAll(path)
+		return
 	}
 	for _, f := range files {
 		if f.IsDir() {
@@ -51,8 +53,9 @@ func clearUnstoredStaticFile(path string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Error(err)
+		return
 	}
-	if len(files) == 0 {
+	if len(files) == 0 && path != "./static/storage" {
 		os.RemoveAll(path)
 		return
 	}
@@ -88,7 +91,7 @@ func clearUnuserdStaticFile(pageNum int) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info("len(list)", len(list))
+	// log.Info("len(list)", len(list))
 
 	// 2. 删除这些静态文件的数据库内容和文件内容
 	for _, item := range list {
@@ -100,18 +103,20 @@ func clearUnuserdStaticFile(pageNum int) {
 			// log.Info("就是你还有")
 			// log.Info((v)["_id"], (v)["files"], v["path"], v["fileName"], " -> deleting")
 		} else {
-			log.Info("该删除了", pageNum)
+			// log.Info("该删除了", pageNum)
 			// 2.1. 检测静态文件是否存在,有则删除
 			path := v["path"].(string) + "/" + v["fileName"].(string)
+
 			if nfile.IsExists(path) {
 				os.Remove(path)
-				// 2.2 删除数据库内容
-				err := fileDbx.DeleteStaticFile(v["_id"].(primitive.ObjectID))
-				if err != nil {
-					log.Error(err)
-				}
+				log.Info("Remove static file -> ", path)
 			} else {
 				log.Info(v["_id"], " -> static file does not exist")
+			}
+			// 2.2 删除数据库内容
+			err := fileDbx.DeleteStaticFile(v["_id"].(primitive.ObjectID))
+			if err != nil {
+				log.Error(err)
 			}
 		}
 	}
