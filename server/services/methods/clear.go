@@ -25,9 +25,9 @@ func Clear() {
 
 func clear() {
 	log.Info("------Clear------")
-	// clearEmptyFolder("./static")
-	// clearUnstoredStaticFile("./static/storage")
+	clearUnstoredStaticFile("./static/storage")
 	clearUnuserdStaticFile(1)
+	clearEmptyFolder("./static")
 }
 
 // 删除空文件夹
@@ -119,5 +119,6 @@ func clearUnuserdStaticFile(pageNum int) {
 		clearUnuserdStaticFile(pageNum + 1)
 	} else {
 		log.Info("------end------")
+		clearEmptyFolder("./static")
 	}
 }
