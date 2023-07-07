@@ -3,7 +3,7 @@ name="saass"
 port=16100
 branch="main"
 configFilePath="config.pro.json"
-allowMethods=("ls stop remove gitpull proto dockerremove start logs")
+allowMethods=("backup ls stop remove gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
@@ -28,6 +28,7 @@ start() {
   DIR=$(cd $(dirname $0) && pwd)
   cp -r ~/.ssh $DIR
   cp -r ~/.gitconfig $DIR
+  git config --global url."git@github.com:".insteadOf "https://github.com/" 
 
   echo "-> 准备构建Docker"
   docker build \
@@ -58,6 +59,12 @@ ls() {
 
 stop() {
   docker stop $name
+}
+
+backup() {
+  backupTime=$(date +'%Y-%m-%d_%T')
+  zip -q -r ./saass_$backupTime.zip ./static
+  unzip -d ./ build_2023-07-04_21:11:13.zip
 }
 
 remove() {

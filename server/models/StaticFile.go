@@ -99,7 +99,7 @@ func (m *StaticFile) Validate() error {
 			validation.Parameter(&m.FileInfo.Name, validation.Required()),
 			validation.Parameter(&m.FileInfo.Size, validation.Required(), validation.GreaterEqual(1)),
 			validation.Parameter(&m.FileInfo.Type, validation.Required()),
-			validation.Parameter(&m.FileInfo.Suffix, validation.Required()),
+			// validation.Parameter(&m.FileInfo.Suffix, validation.Required()),
 			validation.Parameter(&m.FileInfo.LastModified, validation.Required()),
 			validation.Parameter(&m.FileInfo.Hash, validation.Required()),
 		)

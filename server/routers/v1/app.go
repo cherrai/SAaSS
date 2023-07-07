@@ -5,7 +5,7 @@ import (
 	"github.com/cherrai/SAaSS/services/middleware"
 )
 
-func (r Routerv1) IniApp() {
+func (r Routerv1) InitApp() {
 	fc := new(controllersV1.AppController)
 
 	role := middleware.RoleMiddlewareOptions{

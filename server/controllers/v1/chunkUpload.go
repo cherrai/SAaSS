@@ -78,7 +78,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// log.Info("fileInfo", fileInfo)
 	// log.Info("typestr", typestr)
 	// 存在则直接返地址，并不设置任何token
-	tempFolderPath := "./static/chuck/" + fileInfo["hash"] + "/"
+	tempFolderPath := "./static/chuck/" + fileInfo["hash"] + "/" + c.PostForm("chunkSize") + "/"
 
 	fileNameWithSuffix := path.Base(fileInfo["name"])
 	fileType := path.Ext(fileNameWithSuffix)
@@ -139,7 +139,22 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		validation.Parameter(&fileConfigInfo.ParentFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.TempFolderPath, validation.Required()),
 		validation.Parameter(&fileConfigInfo.TempChuckFolderPath, validation.Required()),
-		validation.Parameter(&fileConfigInfo.ChunkSize, validation.Type("int64"), validation.Required(), validation.Enum([]int64{16 * 1024, 32 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024, 1024 * 1024}), validation.GreaterEqual(1)),
+		validation.Parameter(&fileConfigInfo.ChunkSize, validation.Type("int64"), validation.Required(),
+			validation.Enum([]int64{
+				16 * 1024,
+				32 * 1024,
+				64 * 1024,
+				128 * 1024,
+				256 * 1024,
+				512 * 1024,
+				1024 * 1024,
+				2 * 1024 * 1024,
+				5 * 1024 * 1024,
+				10 * 1024 * 1024,
+				20 * 1024 * 1024,
+				30 * 1024 * 1024,
+				50 * 1024 * 1024,
+			}), validation.GreaterEqual(1)),
 		validation.Parameter(&fileConfigInfo.UserId, validation.Type("string"), validation.Required()),
 		validation.Parameter(&fileConfigInfo.AllowShare, validation.Type("int64"), validation.Enum([]int64{2, 1, -1}), validation.Required()),
 		// validation.Parameter(&fileConfigInfo.ShareUsers, validation.Required()),
@@ -155,7 +170,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		&fileConfigInfo.FileInfo,
 		validation.Parameter(&fileConfigInfo.FileInfo.Name, validation.Required()),
 		validation.Parameter(&fileConfigInfo.FileInfo.Size, validation.Type("int64"), validation.Required(), validation.GreaterEqual(1)),
-		validation.Parameter(&fileConfigInfo.FileInfo.Type, validation.Required()),
+		// validation.Parameter(&fileConfigInfo.FileInfo.Type, validation.Required()),
 		validation.Parameter(&fileConfigInfo.FileInfo.LastModified, validation.Type("int64"), validation.Required(), validation.GreaterEqual(1)),
 		validation.Parameter(&fileConfigInfo.FileInfo.Hash, validation.Required()),
 	)
@@ -420,8 +435,10 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		return
 	}
 	log.Info(totalSizeInt64, file.Size, totalSizeInt64+file.Size, fileConfigInfo.FileInfo.Size)
+	log.Info(totalSizeInt64 == file.Size || totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size)
 	// 已经全部传完
-	if totalSizeInt64 == file.Size || totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
+	// totalSizeInt64 == file.Size ||
+	if totalSizeInt64+file.Size == fileConfigInfo.FileInfo.Size {
 
 		code, err := methods.MergeFiles(fileConfigInfo)
 		log.Info("MergeFiles", code, err != nil)

@@ -2,23 +2,16 @@ package controllersV1
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"os"
 	"path"
-	"strings"
 	"time"
 
 	conf "github.com/cherrai/SAaSS/config"
-	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/SAaSS/services/methods"
 	"github.com/cherrai/SAaSS/services/response"
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/ncredentials"
-	"github.com/cherrai/nyanyago-utils/nfile"
-	"github.com/cherrai/nyanyago-utils/nimages"
 	"github.com/cherrai/nyanyago-utils/nint"
-	"github.com/cherrai/nyanyago-utils/nstrings"
 	"github.com/cherrai/nyanyago-utils/validation"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -1030,86 +1023,26 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 
 	res.Code = 200
 	// log.Info("file", file)
-	tempList := []map[string]interface{}{}
-
-	if len(file.Total) == 0 {
-		res.Data = map[string]interface{}{
-			"total": 0,
-			"list":  tempList,
-		}
-		res.Call(c)
-		return
-	}
-
-	hashList := []string{}
-	for _, v := range file.List {
-		hashList = append(hashList, v.Hash)
-	}
-
-	staticFileList, err := fileDbx.GetStaticFileListWithHash(hashList)
+	list, err := methods.FormatFile(file.List)
 	if err != nil {
 		res.Error = err.Error()
 		res.Code = 10001
 		res.Call(c)
 		return
 	}
-	for _, v := range file.List {
-		for _, sv := range staticFileList {
-			if sv.FileInfo.Hash == v.Hash {
-				// pd := ""
-				// if v.AvailableRange.Password != "" {
-				// 	pd = v.AvailableRange.Password[0:2] + "******" + v.AvailableRange.Password[len(v.AvailableRange.Password)-3:len(v.AvailableRange.Password)]
-				// }
 
-				// shortUrl := "/s/" + v.ShortId
-				// url := "/s/" + v.FileName + "?sid=" + v.ShortId
-				at := methods.GetTemporaryAccessToken(v.ShortId, params.Deadline)
-				log.Info(params.Deadline)
-				shortUrl := "/s/" + v.ShortId + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
-				url := "/s/" + v.FileName + "?sid=" + v.ShortId + "&u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
-				tempList = append(tempList, map[string]interface{}{
-					"id":       v.Id,
-					"shortId":  v.ShortId,
-					"fileName": v.FileName,
-					// "path":           params.Path,
-					"parentFolderId": v.ParentFolderId.Hex(),
-					"availableRange": map[string]interface{}{
-						"visitCount":     v.AvailableRange.VisitCount,
-						"expirationTime": v.AvailableRange.ExpirationTime,
-						"password":       v.AvailableRange.Password,
-						"allowShare":     v.AvailableRange.AllowShare,
-						"shareUsers":     v.AvailableRange.ShareUsers,
-						"authorId":       v.AvailableRange.AuthorId,
-					},
-					"usage": map[string]interface{}{
-						"visitCount": v.Usage.VisitCount,
-					},
-					"createTime":     v.CreateTime,
-					"lastUpdateTime": v.LastUpdateTime,
-					"deleteTime":     v.DeleteTime,
-					"urls": map[string]string{
-						"domainUrl": conf.Config.StaticPathDomain,
-						"shortUrl":  shortUrl,
-						"url":       url,
-					},
-					"fileInfo": map[string]interface{}{
-						"name":         sv.FileInfo.Name,
-						"size":         sv.FileInfo.Size,
-						"type":         sv.FileInfo.Type,
-						"suffix":       sv.FileInfo.Suffix,
-						"lastModified": sv.FileInfo.LastModified,
-						"hash":         sv.FileInfo.Hash,
-						"width":        sv.FileInfo.Width,
-						"height":       sv.FileInfo.Height,
-					},
-				})
-				break
-			}
+	if len(file.Total) == 0 {
+		res.Data = map[string]interface{}{
+			"total": 0,
+			"list":  list,
 		}
+		res.Call(c)
+		return
 	}
+
 	res.Data = map[string]interface{}{
 		"total": file.Total[0].Count,
-		"list":  tempList,
+		"list":  list,
 	}
 	res.Call(c)
 }
@@ -1470,28 +1403,6 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 	res.Call(c)
 }
 
-func (dc *FileController) FilterFile(file *models.File) error {
-	// 检测访问次数
-	if file.AvailableRange.VisitCount != -1 && file.Usage.VisitCount > file.AvailableRange.VisitCount {
-		fileDbx.FileNotAccessible(file.Id)
-		return errors.New("404")
-	}
-	if file.AvailableRange.ExpirationTime != -1 && file.AvailableRange.ExpirationTime <= time.Now().Unix() {
-		// 已过期
-		fileDbx.ExpiredFile(file.Id)
-		return errors.New("404")
-	}
-	// 检测有效期
-	return nil
-}
-
-func (dc *FileController) VisitFile(file *models.File) error {
-	if err := fileDbx.VisitFile(file.Id); err != nil {
-		return errors.New("404")
-	}
-	return nil
-}
-
 func (dc *FileController) GetPasswordToken(c *gin.Context) {
 	// 1、 创建请求体
 	var res response.ResponseType
@@ -1571,194 +1482,4 @@ func (dc *FileController) GetPasswordToken(c *gin.Context) {
 		// "rootPathToken": r,
 	}
 	res.Call(c)
-}
-
-func (dc *FileController) ProcessFile(c *gin.Context, filePath string) (string, error) {
-	process := c.Query("x-saass-process")
-
-	processSplit := strings.Split(process, ",")
-	processType := processSplit[0]
-
-	fileNameWithSuffix := path.Base(filePath)
-	fileType := path.Ext(fileNameWithSuffix)
-	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
-
-	switch processType {
-	case "image/resize":
-		if !(fileType == ".jpg" || fileType == ".jpeg" || fileType == ".png") {
-			return "", errors.New("this is not a picture")
-		}
-		imageInfo, err := nimages.GetImageInfo(filePath)
-		if err != nil {
-			return "", err
-		}
-		quality := nint.ToInt(processSplit[2])
-		pixel := nint.ToInt64(processSplit[1])
-
-		saveAsFoloderPath := "./static/temp/" + strings.Replace(
-			strings.Replace(filePath, fileNameOnly+fileType, "", -1), "./static/storage/", "", -1)
-		saveAsPath := fileNameOnly + "_" + processSplit[1] + "_" + processSplit[2] + fileType
-
-		// log.Info("saveAsPath", saveAsFoloderPath, saveAsPath)
-		// 创建文件夹
-		if !nfile.IsExists(saveAsFoloderPath) {
-			os.MkdirAll(saveAsFoloderPath, os.ModePerm)
-		}
-		if !nfile.IsExists(saveAsFoloderPath + saveAsPath) {
-			w := 0
-			h := 0
-			if imageInfo.Width > imageInfo.Height {
-				if pixel > imageInfo.Width {
-					w = nint.ToInt(imageInfo.Width)
-				} else {
-					w = nint.ToInt(pixel)
-				}
-			} else {
-				if pixel > imageInfo.Height {
-					h = nint.ToInt(imageInfo.Height)
-				} else {
-					h = nint.ToInt(pixel)
-				}
-			}
-			err = nimages.Resize(filePath, saveAsFoloderPath+saveAsPath, w, h, quality)
-			if err != nil {
-				return "", err
-			}
-		}
-		return saveAsFoloderPath + saveAsPath, nil
-	default:
-		return filePath, nil
-	}
-	// nimages.Resize("./static/WX20210127-125442@2x.png", "./static/3.png", 900, 0, 50)
-
-	// return filePath, nil
-}
-
-// 案例
-// http://localhost:16100/s/87f7a38b0cdf04949f770ea39264db33?x-saass-process=image/resize,900,70
-// http://localhost:16100/s/87f7a38b0cdf04949f770ea39264db33
-// http://localhost:16100/s/ces.jpg?a=bc886e5df63bf360077df1f61473e900&x-saass-process=image/resize,200,70
-func (dc *FileController) Download(c *gin.Context) {
-	// log.Info("------DownloadController------")
-	p := c.Request.URL.Path[2:len(c.Request.URL.Path)]
-	filePath := p[strings.LastIndex(p, "/")+1 : len(p)-0]
-	folderPath := p[0 : strings.LastIndex(p, "/")+1]
-	appEncryptionId := c.Query("a")
-	sid := c.Query("sid")
-	rootPath := c.Query("r")
-	userToken := c.Query("ut")
-	temporaryAccessToken := c.Query("tat")
-	isTAT := false
-	shortId := nstrings.StringOr(sid, filePath)
-	if temporaryAccessToken != "" {
-		u := c.Query("u")
-		isTAT = ncredentials.AuthCredentials(u, temporaryAccessToken, shortId)
-	}
-
-	log.Info(folderPath, filePath, appEncryptionId == "")
-	var file *models.File
-	var err error
-	appId := ""
-	appKey := ""
-
-	if (folderPath == "/" && appEncryptionId == "") || sid != "" {
-		// log.Info("shortId", shortId)
-		file, err = fileDbx.GetFileWithShortId(shortId)
-		// log.Info("file", file)
-
-		if file == nil || err != nil {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-		for _, v := range conf.AppList {
-			if v.AppId == file.AppId {
-				appKey = v.AppKey
-				break
-			}
-		}
-
-	} else {
-		for _, v := range conf.AppList {
-			if v.EncryptionId == appEncryptionId {
-				appId = v.AppId
-				appKey = v.AppKey
-				break
-			}
-		}
-		// log.Info("filePath", path, filePath, 2, strings.LastIndex(path, "/"))
-		log.Info("folderPath", folderPath)
-		// log.Info(appId, nstrings.StringOr(folderPath, "/"), filePath)
-		file, err = fileDbx.GetFileWithFileInfo(appId, path.Join(rootPath, nstrings.StringOr(folderPath, "/")), filePath, "")
-		// log.Info("file, err", file, err)
-		if file == nil || err != nil {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-	}
-	log.Info(file.AvailableRange.AllowShare, isTAT)
-	if !isTAT {
-		switch file.AvailableRange.AllowShare {
-		case 1:
-			isAll := false
-			for _, v := range file.AvailableRange.ShareUsers {
-				if v.Uid == "AllUser" {
-					isAll = true
-					break
-				}
-			}
-			if !isAll {
-				c.String(http.StatusNotFound, "")
-				return
-			}
-		case -1:
-			// c.String(http.StatusNotFound, "")
-			rKey := conf.Redisdb.GetKey("UserToken")
-			v, err := conf.Redisdb.Get(rKey.GetKey(userToken))
-			if err != nil {
-				c.String(http.StatusNotFound, "")
-				return
-			}
-			userId := v.String()
-			if userId != file.AvailableRange.AuthorId {
-				c.String(http.StatusNotFound, "")
-				return
-			}
-		}
-	}
-	log.Info("file.AvailableRange.Password ", file.AvailableRange.Password)
-	if !isTAT && file.AvailableRange.Password != "" {
-		u := c.Query("u")
-		p := c.Query("p")
-		if u == "" || p == "" {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-		// log.Info(appKey + file.AvailableRange.Password)
-		// log.Info(u, p, ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password))
-		if !ncredentials.AuthCredentials(u, p, appKey+file.AvailableRange.Password) {
-			c.String(http.StatusNotFound, "")
-			return
-		}
-	}
-	if err = dc.FilterFile(file); err != nil {
-		c.String(http.StatusNotFound, "")
-		return
-	}
-	if err = dc.VisitFile(file); err != nil {
-		c.String(http.StatusNotFound, "")
-		return
-	}
-	sf, err := fileDbx.GetStaticFileWithHash(file.Hash)
-	log.Info(sf)
-	if err != nil || sf == nil {
-		c.String(http.StatusNotFound, "")
-		return
-	}
-	processFilePath, err := dc.ProcessFile(c, sf.Path+"/"+sf.FileName)
-	// log.Info("processFilePath", processFilePath, err)
-	if err != nil {
-		c.String(http.StatusNotFound, "")
-		return
-	}
-	c.File(processFilePath)
 }

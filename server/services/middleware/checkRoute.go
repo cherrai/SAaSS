@@ -11,8 +11,9 @@ import (
 
 func CheckRouteMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		isStaticServer := strings.Contains(c.Request.URL.Path, "/s/")
-		if isStaticServer {
+		if strings.Contains(c.Request.URL.Path, "/s/") ||
+			strings.Contains(c.Request.URL.Path, "/m/") ||
+			strings.Contains(c.Request.URL.Path, "/share.html") {
 			c.Set("isStaticServer", true)
 			c.Next()
 			return

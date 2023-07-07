@@ -19,6 +19,10 @@ var RedisCacheKeys = map[string]*nredis.RedisCacheKeysType{
 		Key:        "ParentFolderId",
 		Expiration: 5 * 60 * time.Second,
 	},
+	"GetParentFolderIdByPathAndPid": {
+		Key:        "GetParentFolderIdByPathAndPid",
+		Expiration: 5 * 60 * time.Second,
+	},
 	"UserToken": {
 		Key:        "UserToken",
 		Expiration: 5 * 60 * time.Second,

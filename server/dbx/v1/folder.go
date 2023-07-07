@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path"
+	// "path/filepath"
 	"strings"
 	"time"
 
@@ -188,6 +189,45 @@ func (fd *FolderDbx) GetParentFolderId(appId, parentPath string, isCreateParentF
 		return primitive.NilObjectID, err
 	}
 	return gf.Id, nil
+}
+
+func (fd *FolderDbx) GetParentFolderIdByPathAndSid(appId, path string, pid primitive.ObjectID) (primitive.ObjectID, error) {
+	if path == "/" {
+		return primitive.NilObjectID, nil
+	}
+
+	rKey := conf.Redisdb.GetKey("GetParentFolderIdByPathAndPid")
+
+	v, err := conf.Redisdb.Get(rKey.GetKey(path + pid.Hex()))
+	if v != nil && err == nil {
+		if v.String() != "" {
+			id, _ := primitive.ObjectIDFromHex(v.String())
+			return id, nil
+		}
+	}
+
+	pathArr := strings.Split(path, "/")
+	folderName := pathArr[1]
+	gf, err := fd.GetFolderByParentFolderId(appId, folderName, pid)
+
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+	if gf == nil {
+		// 说明此文件夹不存在
+		return primitive.NilObjectID, err
+	}
+	pfId := gf.Id
+	if len(pathArr) > 2 {
+		pfId, err = fd.GetParentFolderIdByPathAndSid(appId, "/"+strings.Join(pathArr[2:], "/"), gf.Id)
+		if err != nil {
+			return primitive.NilObjectID, err
+		}
+	}
+	if err = conf.Redisdb.Set(rKey.GetKey(path+pid.Hex()), pfId.Hex(), rKey.GetExpiration()); err != nil {
+		return primitive.NilObjectID, err
+	}
+	return pfId, nil
 }
 
 func (fd *FolderDbx) GetFolderByParentFolderId(appId, folderName string, parentFolderId primitive.ObjectID) (*models.Folder, error) {

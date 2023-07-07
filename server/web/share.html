@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Index of /</title>
+		<script
+			type="module"
+			src="http://192.168.204.129:32300/build/saki-ui.esm.js"
+		></script>
+		<script
+			nomodule="true"
+			src="http://192.168.204.129:32300/build/saki-ui.js"
+		></script>
+		<script src="
+https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js
+"></script>
+		<style>
+			html {
+				font-family: Roboto, sans-serif, -apple-system, BlinkMacSystemFont,
+					'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+					'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+					'Noto Color Emoji';
+
+				--saki-default-color: #f29cb2;
+			}
+			body {
+				width: 100%;
+				max-width: 600px;
+				margin: 0 auto;
+			}
+			.main {
+				width: 100%;
+				border: 1px solid #ccc;
+				border-radius: 10px;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+			/* table tr {
+			} */
+			/* table tr:nth-child(2n) {
+				background-color: #e2e2e2;
+			} */
+			table tr:hover {
+				background-color: #eeeeee;
+			}
+			table td {
+				margin: 0;
+				padding: 0;
+				height: 40px;
+			}
+			table .name {
+				padding-left: 1em;
+				display: flex;
+				justify-content: flex-start;
+				align-items: center;
+				font-size: 14px;
+			}
+			table .time {
+				font-size: 13px;
+			}
+			table .size {
+				font-size: 13px;
+			}
+			table .name a {
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Index of /</h1>
+		<div class="main">
+			<table></table>
+		</div>
+		<br />
+		<address></address>
+	</body>
+
+	<script>
+		const init = () => {
+			const byteConvert = (bytes) => {
+				if (isNaN(bytes)) {
+					return ''
+				}
+				let symbols = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+				let exp = Math.floor(Math.log(bytes) / Math.log(2))
+				if (exp < 1) {
+					exp = 0
+				}
+				let i = Math.floor(exp / 10)
+				bytes = bytes / Math.pow(2, 10 * i)
+				let bstr = bytes.toString()
+				if (bstr.length > bytes.toFixed(2).toString().length) {
+					bstr = bytes.toFixed(2)
+				}
+				return bstr + ' ' + symbols[i]
+			}
+			const getUrlParams = (url) => {
+				const u = new URL(url)
+				const s = new URLSearchParams(u.search)
+				const obj = {}
+				s.forEach((v, k) => (obj[k] = v))
+				return obj
+			}
+			const formatData = (data) => {
+				console.log(data)
+				if (!data || data.code !== 200) {
+					return
+				}
+				if (data.data.list && data.data.list.length) {
+					let html = `<tr>
+					<td class="name">
+						<saki-icon
+							width="16px"
+							height="16px"
+							color="#666"
+							margin="0 6px 0 0"
+							type="FolderFill"
+						></saki-icon>
+						<a href="${`${location.pathname}?path=${parentPath}&sid=${params.sid}&pwd=${params.pwd}`}">../</a>
+					</td>
+					<td class="time"></td>
+					<td class="size"></td>
+				</tr>`
+					data.data.list.forEach((v) => {
+						if (v.folderName) {
+							html += `<tr>
+					<td class="name">
+						<saki-icon
+							width="16px"
+							height="16px"
+							color="#666"
+							margin="0 6px 0 0"
+							type="FolderFill"
+						></saki-icon>
+						<a href="${v.urls.url.replace('/api/v1/share', location.pathname)}">${
+								v.folderName
+							}</a>
+					</td>
+					<td class="time">${moment(v.lastUpdateTime * 1000).format(
+						'YYYY-MM-DD hh:mm:ss'
+					)}</td>
+					<td class="size"></td>
+				</tr>`
+						} else {
+							html += `<tr>
+					<td class="name">
+						<saki-icon
+							width="16px"
+							height="16px"
+							color="#666"
+							margin="0 6px 0 0"
+							type="FileFill"
+						></saki-icon>
+						<a target="_blank" href="${v.urls.url}">${v.fileName}</a>
+					</td>
+					<td class="time">${moment(v.lastUpdateTime * 1000).format(
+						'YYYY-MM-DD hh:mm:ss'
+					)}</td>
+					<td class="size">${byteConvert(v.fileInfo?.size || 0)}</td>
+				</tr>`
+						}
+					})
+
+					tableEl.innerHTML = html
+				}
+			}
+
+			const h1El = document.body.querySelector('h1')
+			const tableEl = document.body.querySelector('table')
+			const addressEl = document.body.querySelector('address')
+
+			const params = getUrlParams(location.href)
+
+			// console.log(params)
+			const pathArr = params.path.split('/').filter((v) => {
+				return v
+			})
+
+			const parentPath =
+				'/' +
+				(pathArr.length <= 1
+					? ''
+					: pathArr
+							.filter((v, i) => {
+								if (i == 0) {
+									return true
+								}
+								return i != pathArr.length - 1
+							})
+							.join('/'))
+			console.log(pathArr, parentPath)
+
+			h1El.innerHTML = `
+      Index of ${params.path}
+      `
+			document.title = h1El.innerHTML
+
+			tableEl.innerHTML = `<tr>
+					<td class="name">
+						<saki-icon
+							width="16px"
+							height="16px"
+							color="#666"
+							margin="0 6px 0 0"
+							type="FolderFill"
+						></saki-icon>
+						<a href="${`${location.pathname}?path=${parentPath}&sid=${params.sid}&pwd=${params.pwd}`}">../</a>
+					</td>
+					<td class="time"></td>
+					<td class="size"></td>
+				</tr>`
+
+			if (!params.sid) {
+				console.log('sid不存在')
+				return
+			}
+			const url =
+				location.origin +
+				`/api/v1/share?path=${params.path}&sid=${params.sid}&pwd=${params.pwd}`
+
+			addressEl.innerHTML = `
+		    SAaSS <a href="https://aiiko.club/shiinaaiiko">@Shiina Aiiko</a>
+		    / <a target="_blank" href="${url}">API</a>
+		    `
+
+			const http = new XMLHttpRequest()
+
+			http.open('GET', url)
+			http.send()
+
+			http.onreadystatechange = (e) => {
+				if (http.readyState == 4) {
+					var items = []
+					try {
+						items = JSON.parse(http.responseText)
+					} catch (err) {
+						console.error(err, http.responseText)
+					}
+					formatData(JSON.parse(http.responseText))
+				}
+			}
+		}
+		init()
+	</script>
+</html>

@@ -983,13 +983,13 @@ func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, er
 func (fd *FileDbx) GetUnusedStaticFileList(pageSize, pageNum int, deadline int64) ([]*(map[string]interface{}), error) {
 	sf := new(models.StaticFile)
 	// log.Info("deadline", time.Now().Unix(), deadline)
-	id, _ := primitive.ObjectIDFromHex("62f925b321f1dd553a2228a3")
+	// id, _ := primitive.ObjectIDFromHex("64a7cd0c0a4bb98c933df551")
 	params := []bson.M{
 		{
 			"$match": bson.M{
 				"$and": []bson.M{
 					{
-						"_id": id,
+						// "_id": id,
 						"createTime": bson.M{
 							"$lte": deadline,
 						},

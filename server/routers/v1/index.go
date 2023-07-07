@@ -21,5 +21,6 @@ func (r Routerv1) Init() {
 	r.InitChunkUpload()
 	r.InitFile()
 	r.InitFolder()
-	r.IniApp()
+	r.InitApp()
+	r.InitDownload()
 }

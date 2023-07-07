@@ -257,7 +257,6 @@ func (dc *FolderController) GetFolderByShortId(c *gin.Context) {
 func (dc *FolderController) GetFolderListWithShortId(c *gin.Context) {
 	var res response.ResponseType
 	res.Code = 200
-
 	params := struct {
 		AppId       string
 		AppKey      string
@@ -265,6 +264,7 @@ func (dc *FolderController) GetFolderListWithShortId(c *gin.Context) {
 		Id          string
 		AccessToken map[string]string
 		Deadline    int64
+		Path        int64
 	}{
 		AppId:       c.GetString("appId"),
 		AppKey:      c.GetString("appKey"),
@@ -272,6 +272,7 @@ func (dc *FolderController) GetFolderListWithShortId(c *gin.Context) {
 		Id:          c.Query("id"),
 		AccessToken: c.QueryMap("accessToken"),
 		Deadline:    nint.ToInt64(c.Query("deadline")),
+		// Path:        c.Query("path"),
 	}
 	at := c.Query("accessToken")
 	if at != "" {
