@@ -28,6 +28,9 @@ func clear() {
 	clearUnstoredStaticFile("./static/storage")
 	clearUnuserdStaticFile(1)
 	clearEmptyFolder("./static/storage")
+
+	// 未来
+	// 清除未使用的File或Folder
 }
 
 // 删除空文件夹
