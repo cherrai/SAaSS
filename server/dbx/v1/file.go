@@ -950,6 +950,7 @@ func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 	}
 
 	_, err = file.GetCollection().InsertOne(context.TODO(), file)
+	// log.Info("file", file, err)
 	if err != nil {
 		return nil, err
 	}
@@ -964,7 +965,7 @@ func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, er
 	}
 	// 获取文件实际信息
 	if sf.FileInfo.Type == "image/png" || sf.FileInfo.Type == "image/jpeg" {
-		imageInfo, err := nimages.GetImageInfo(path.Join(sf.Path, sf.FileName))
+		imageInfo, err := nimages.GetImageInfoByPath(path.Join(sf.Path, sf.FileName))
 		log.Info(imageInfo, err)
 		if err != nil {
 			return nil, err

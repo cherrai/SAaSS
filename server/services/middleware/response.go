@@ -28,10 +28,11 @@ func Response() gin.HandlerFunc {
 		// 	// c.JSON(http.StatusOK, res.GetResponse())
 		// 	// return
 		// }
+		// log.Info(isRoles && roles.isHttpServer)
 		if isRoles && roles.isHttpServer {
 			defer func() {
 				roles := c.MustGet("roles").(*RoleOptionsType)
-				// Log.Info("Response middleware", roles.ResponseEncryption)
+				// log.Info("Response middleware", roles.isHttpServer, roles.ResponseEncryption)
 				if roles.isHttpServer {
 					switch roles.ResponseDataType {
 
@@ -40,6 +41,8 @@ func Response() gin.HandlerFunc {
 							// 当需要加密的时候
 						} else {
 							getResponse, _ := c.Get("body")
+							// log.Info("getResponse", http.StatusOK, getResponse)
+
 							c.JSON(http.StatusOK, getResponse)
 						}
 					}

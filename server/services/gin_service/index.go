@@ -8,7 +8,7 @@ import (
 	conf "github.com/cherrai/SAaSS/config"
 	"github.com/cherrai/SAaSS/routers"
 	"github.com/cherrai/SAaSS/services/middleware"
-
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,10 +32,10 @@ func InitRouter() {
 	})
 	Router.Use(middleware.CheckRouteMiddleware())
 	Router.Use(middleware.RoleMiddleware())
-	// // 处理返回值
-	Router.Use(middleware.Response())
 	// // 请求时间中间件
 	Router.Use(middleware.RequestTime())
+	// // 处理返回值
+	Router.Use(middleware.Response())
 	// // 错误中间件
 	Router.Use(middleware.Error())
 	// // 处理解密加密
@@ -43,7 +43,7 @@ func InitRouter() {
 	Router.Use(middleware.CheckApp())
 	Router.Use(middleware.CheckUserToken())
 	Router.Use(middleware.Authorize())
-
+	Router.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/api/"})))
 	// 测试上传
 	// Router.POST("/testupload", func(c *gin.Context) {
 	// 	// 		form, _ := c.MultipartForm()

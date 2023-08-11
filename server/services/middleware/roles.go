@@ -63,6 +63,13 @@ func RoleMiddleware() gin.HandlerFunc {
 			role.isSocketServer = !isHttpServer
 			c.Set("roles", role)
 			c.Next()
+			// log.Info("json")
+			// if c.Request.URL.Path == "/api/v1/chunkupload/upload" {
+
+			// 	log.Info("json1")
+			// 	c.JSON(http.StatusOK, "obj")
+			// 	// c.JSON(http.StatusNotFound, "obj")
+			// }
 			return
 		}
 		c.Next()

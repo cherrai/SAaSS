@@ -26,6 +26,8 @@ func Cors(allowOrigins []string) gin.HandlerFunc {
 			// Log.Info("Cors 当前Referer: ", c.Request.Referer())
 			// c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		}
+		c.Writer.Header().Set("Cross-Origin-Resource-Policy", "cross-origin")
+		c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, Content-Length, X-CSRF-Token, Token, session, Origin, Host, Connection, Accept-Encoding, Accept-Language, X-Requested-With")

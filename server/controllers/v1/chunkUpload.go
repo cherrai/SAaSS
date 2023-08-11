@@ -358,7 +358,6 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	//
 
 	// 获取数据库，检测文件是否上传成功过
-
 	// log.Info("fileConfigInfo", fileConfigInfo)
 
 	// 检查文件是否存在
@@ -461,6 +460,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 				return
 			}
 			fileConfigInfo.ShortId = saveFile.ShortId
+			log.Info(fileConfigInfo.ShortId, saveFile.ShortId)
 			res.Data = methods.GetResponseData(fileConfigInfo)
 		}
 		res.Code = code

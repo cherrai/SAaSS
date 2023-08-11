@@ -207,10 +207,10 @@ func (dc *DownloadController) ProcessFile(c *gin.Context, filePath string) (stri
 
 			return "", errors.New("this is not a picture")
 		}
-		imageInfo, err := nimages.GetImageInfo(filePath)
-		if err != nil {
-			return "", err
-		}
+		// imageInfo, err := nimages.GetImageInfoByPath(filePath)
+		// if err != nil {
+		// 	return "", err
+		// }
 		quality := nint.ToInt(processSplit[2])
 		pixel := nint.ToInt64(processSplit[1])
 
@@ -224,23 +224,8 @@ func (dc *DownloadController) ProcessFile(c *gin.Context, filePath string) (stri
 			os.MkdirAll(saveAsFoloderPath, os.ModePerm)
 		}
 		if !nfile.IsExists(saveAsFoloderPath + saveAsPath) {
-			w := 0
-			h := 0
-			if imageInfo.Width > imageInfo.Height {
-				if pixel > imageInfo.Width {
-					w = nint.ToInt(imageInfo.Width)
-				} else {
-					w = nint.ToInt(pixel)
-				}
-			} else {
-				if pixel > imageInfo.Height {
-					h = nint.ToInt(imageInfo.Height)
-				} else {
-					h = nint.ToInt(pixel)
-				}
-			}
-			err = nimages.Resize(filePath, saveAsFoloderPath+saveAsPath, w, h, quality)
-			if err != nil {
+
+			if err := nimages.ResizeByPath(filePath, saveAsFoloderPath+saveAsPath, nint.ToInt(pixel), 0, 0, quality); err != nil {
 				return "", err
 			}
 		}
