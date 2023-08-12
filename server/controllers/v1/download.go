@@ -155,7 +155,7 @@ func (dc *DownloadController) GetShareFiles(c *gin.Context) {
 
 		fileList, err := fileDbx.GetFileLisByParentFolderId(folder.AppId, pid)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10006
 			res.Call(c)
 			return

@@ -51,7 +51,7 @@ func (dc *AppController) GetAppToken(c *gin.Context) {
 	// fc20c5cc-c567-50e8-90fc-5a0eb1ed6316100000
 
 	if err = conf.Redisdb.SetStruct(rKey.GetKey(ck), &data, rKey.GetExpiration()); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -97,7 +97,7 @@ func (dc *AppController) GetUserToken(c *gin.Context) {
 	// fc20c5cc-c567-50e8-90fc-5a0eb1ed6316100000
 
 	if err = conf.Redisdb.Set(rKey.GetKey(ck), data.UserId, rKey.GetExpiration()); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return

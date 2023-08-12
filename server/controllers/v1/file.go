@@ -55,7 +55,7 @@ func (dc *FileController) MoveFilesToTrash(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -67,7 +67,7 @@ func (dc *FileController) MoveFilesToTrash(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := fileDbx.MoveFilesToTrash(params.AppId, path.Join(params.RootPath, params.Path), fns, params.UserId); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -111,7 +111,7 @@ func (dc *FileController) CheckFileExists(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -182,7 +182,7 @@ func (dc *FileController) RestoreFile(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -194,7 +194,7 @@ func (dc *FileController) RestoreFile(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := fileDbx.Restore(params.AppId, path.Join(params.RootPath, params.Path), fns, params.UserId); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -238,7 +238,7 @@ func (dc *FileController) DeleteFiles(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -250,7 +250,7 @@ func (dc *FileController) DeleteFiles(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := fileDbx.DeleteFiles(params.AppId, path.Join(params.RootPath, params.Path), fns, params.UserId, []int64{-1}); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -297,7 +297,7 @@ func (dc *FileController) RenameFile(c *gin.Context) {
 		validation.Parameter(&params.NewFileName, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -307,7 +307,7 @@ func (dc *FileController) RenameFile(c *gin.Context) {
 
 	// 4、操作数据库
 	if err := fileDbx.RenameFile(params.AppId, p, params.OldFileName, params.NewFileName, params.UserId); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10011
 		res.Call(c)
 		return
@@ -354,7 +354,7 @@ func (dc *FileController) SetFileSharing(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.Status, validation.Type("int64"), validation.Enum([]int64{1, -1}), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -368,7 +368,7 @@ func (dc *FileController) SetFileSharing(c *gin.Context) {
 
 	// 4、操作数据库
 	if err := fileDbx.SetFileSharing(params.AppId, params.UserId, p, fns, params.Status); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10011
 		res.Call(c)
 		return
@@ -416,7 +416,7 @@ func (dc *FileController) SetFilePassword(c *gin.Context) {
 		validation.Parameter(&params.FileName, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Password, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -430,7 +430,7 @@ func (dc *FileController) SetFilePassword(c *gin.Context) {
 
 	// 4、操作数据库
 	if err := fileDbx.SetFilePassword(params.AppId, params.UserId, p, params.FileName, params.Password); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10011
 		res.Call(c)
 		return
@@ -478,7 +478,7 @@ func (dc *FileController) CopyFile(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.NewPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -493,7 +493,7 @@ func (dc *FileController) CopyFile(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := fileDbx.CopyFile(params.AppId, params.UserId, p, fns, np); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10021
 		res.Call(c)
 		return
@@ -541,7 +541,7 @@ func (dc *FileController) MoveFile(c *gin.Context) {
 		validation.Parameter(&params.FileNames, validation.Required()),
 		validation.Parameter(&params.NewPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -556,7 +556,7 @@ func (dc *FileController) MoveFile(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := fileDbx.MoveFile(params.AppId, params.UserId, p, fns, np); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10021
 		res.Call(c)
 		return
@@ -600,7 +600,7 @@ func (dc *FileController) GetUrls(c *gin.Context) {
 		validation.Parameter(&params.FileName, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -610,7 +610,7 @@ func (dc *FileController) GetUrls(c *gin.Context) {
 	// 4、操作数据库
 	file, err := fileDbx.GetFileWithFileInfo(params.AppId, p, params.FileName, params.UserId)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -837,7 +837,7 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -849,8 +849,9 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 	// 譬如获取所有目录内容的时候
 	log.Info(params.ParentFolderPath)
 	parentFolderId, err := folderDbx.GetParentFolderId(params.AppId, params.ParentFolderPath, false, params.UserId)
+	log.Info(parentFolderId)
 	if err != nil || parentFolderId == primitive.NilObjectID {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -858,7 +859,7 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 	// 4、操作数据库
 	file, err := fileDbx.GetFileLisByParentFolderId(params.AppId, parentFolderId)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -884,7 +885,7 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 
 	staticFileList, err := fileDbx.GetStaticFileListWithHash(hashList)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -973,7 +974,7 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 	if at != "" {
 		err := json.Unmarshal([]byte(at), &params.AccessToken)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10002
 			res.Call(c)
 			return
@@ -1015,7 +1016,7 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 
 	file, err := fileDbx.GetFileLisByParentFolderId(folder.AppId, folder.Id)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1025,7 +1026,7 @@ func (dc *FileController) GetFileListWithShortId(c *gin.Context) {
 	// log.Info("file", file)
 	list, err := methods.FormatFile(file.List)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -1089,7 +1090,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		validation.Parameter(&params.PageSize, validation.Type("int64"),
 			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -1100,7 +1101,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 	// 譬如获取所有目录内容的时候
 	parentFolderId, err := folderDbx.GetParentFolderId(params.AppId, p, false, params.UserId)
 	if err != nil || parentFolderId == primitive.NilObjectID {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1108,7 +1109,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 
 	getFolders, err := folderDbx.GetFolderTreeByParentFolderId(params.AppId, parentFolderId, []int64{1, 0, -1, -2})
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1136,7 +1137,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		[]int64{1, 0})
 
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1162,7 +1163,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 
 	staticFileList, err := fileDbx.GetStaticFileListWithHash(hashList)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -1262,7 +1263,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 		validation.Parameter(&params.PageSize, validation.Type("int64"),
 			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -1273,7 +1274,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 	// 譬如获取所有目录内容的时候
 	parentFolderId, err := folderDbx.GetParentFolderId(params.AppId, p, false, params.UserId)
 	if err != nil || parentFolderId == primitive.NilObjectID {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1281,7 +1282,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 
 	getFolders, err := folderDbx.GetFolderTreeByParentFolderId(params.AppId, parentFolderId, []int64{1, 0, -1, -2})
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1315,7 +1316,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 	// 	[]int64{-1})
 
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -1341,7 +1342,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 
 	staticFileList, err := fileDbx.GetStaticFileListWithHash(hashList)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -1443,7 +1444,7 @@ func (dc *FileController) GetPasswordToken(c *gin.Context) {
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Deadline, validation.Type("int64"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -1452,7 +1453,7 @@ func (dc *FileController) GetPasswordToken(c *gin.Context) {
 	// 4、操作数据库
 	file, err := fileDbx.GetFileWithFileInfo(params.AppId, path.Join(params.RootPath, params.Path), params.FileName, params.UserId)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return

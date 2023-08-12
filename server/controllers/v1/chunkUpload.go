@@ -67,7 +67,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	if fileInfoStr != "" {
 		err := json.Unmarshal([]byte(fileInfoStr), &fileInfo)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10002
 			res.Call(c)
 			return
@@ -88,7 +88,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	parentFolderId, err := folderDbx.GetParentFolderId(appId, parentFolderPath, true, userId)
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -96,7 +96,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	shortId, err := fileDbx.GetShortId(9)
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -161,7 +161,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		validation.Parameter(&fileConfigInfo.RootPath, validation.Type("string"), validation.Required()),
 		// validation.Parameter(&fileConfigInfo.Type, validation.Type("string"), validation.Required(), validation.Enum([]string{"Image", "Video", "Audio", "Text", "File"})),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -175,7 +175,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		validation.Parameter(&fileConfigInfo.FileInfo.Hash, validation.Required()),
 	)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -198,7 +198,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	file, err := fileDbx.GetFileWithFileInfo(fileConfigInfo.AppId, fileConfigInfo.ParentFolderPath, fileConfigInfo.Name, userId)
 	log.Info("file", file)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10019
 		res.Call(c)
 		return
@@ -211,7 +211,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	sf, err := fileDbx.GetStaticFileWithHash(fileConfigInfo.FileInfo.Hash)
 	log.Info(sf, err)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10019
 		res.Call(c)
 		return
@@ -251,7 +251,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 			_, err := fileDbx.UpdateFile(file)
 			if err != nil {
-				res.Error = err.Error()
+				res.Errors(err)
 				res.Code = 10019
 				res.Call(c)
 				return
@@ -270,7 +270,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 			if err != nil {
 				res.Code = 10016
-				res.Error = err.Error()
+				res.Errors(err)
 				res.Call(c)
 				return
 			}
@@ -314,7 +314,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// log.Info("configInfo", configInfo)
 	token, err := methods.GetToken(&fileConfigInfo)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -322,7 +322,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// 后续启用redis
 	err = conf.Redisdb.Set("file_"+fileInfo["hash"], token, 5*60*time.Second)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -332,7 +332,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	err = conf.Redisdb.Set("file_"+fileInfo["hash"]+"_totalsize", totalSize, 5*60*time.Second)
 	log.Info("cccccccccccc", totalSize, uploadedOffset)
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -364,7 +364,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	file, err := c.FormFile("files")
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -378,7 +378,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	err = json.Unmarshal([]byte(fileName), &fileInfoMap)
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -386,7 +386,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 
 	totalSize, err := conf.Redisdb.Get("file_" + fileConfigInfo.FileInfo.Hash + "_totalsize")
 	if err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
@@ -407,14 +407,14 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	err = c.SaveUploadedFile(file, fileConfigInfo.TempChuckFolderPath+fileInfoMap["offset"])
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
 	fileHash, err := methods.GetHash(fileConfigInfo.TempChuckFolderPath + fileInfoMap["offset"])
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -429,7 +429,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	totalSizeInt64, err := strconv.ParseInt(totalSize.String(), 10, 64)
 	if err != nil {
 		res.Code = 10016
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Call(c)
 		return
 	}
@@ -443,7 +443,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		log.Info("MergeFiles", code, err != nil)
 		if err != nil {
 			res.Code = 10016
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Call(c)
 			return
 		}
@@ -455,7 +455,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 			log.Info("saveFile", fileConfigInfo.Password, saveFile, err)
 			if err != nil {
 				res.Code = 10016
-				res.Error = err.Error()
+				res.Errors(err)
 				res.Call(c)
 				return
 			}
@@ -471,14 +471,14 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		// 后续启用redis
 		err = conf.Redisdb.Set("file_"+fileConfigInfo.FileInfo.Hash, c.MustGet("token").(string), 5*60*time.Second)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10001
 			res.Call(c)
 			return
 		}
 		err = conf.Redisdb.Set("file_"+fileConfigInfo.FileInfo.Hash+"_totalsize", totalSizeInt64+file.Size, 5*60*time.Second)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10001
 			res.Call(c)
 			return
@@ -487,7 +487,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	// if file.Size < fileConfigInfo.ChunkSize {
 	// 	code, err, data := MergeFiles(fileConfigInfo)
 	// 	res.Code = code
-	// 	res.Error = err.Error()
+	// 	res.Errors(err)
 	// 	res.Data = data
 	// 	return
 	// }

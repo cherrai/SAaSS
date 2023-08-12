@@ -278,7 +278,7 @@ func (dc *FolderController) GetFolderListWithShortId(c *gin.Context) {
 	if at != "" {
 		err := json.Unmarshal([]byte(at), &params.AccessToken)
 		if err != nil {
-			res.Error = err.Error()
+			res.Errors(err)
 			res.Code = 10002
 			res.Call(c)
 			return
@@ -403,8 +403,9 @@ func (dc *FolderController) GerFolderList(c *gin.Context) {
 		false,
 		data.UserId)
 
+	log.Info(parentFolderId)
 	if err != nil || parentFolderId == primitive.NilObjectID {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
@@ -791,7 +792,7 @@ func (dc *FolderController) SetFolderSharing(c *gin.Context) {
 		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Status, validation.Type("int64"), validation.Enum([]int64{1, -1}), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -809,7 +810,7 @@ func (dc *FolderController) SetFolderSharing(c *gin.Context) {
 		p,
 		folderNames,
 		params.Status); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10011
 		res.Call(c)
 		return
@@ -858,7 +859,7 @@ func (dc *FolderController) SetFolderPassword(c *gin.Context) {
 		validation.Parameter(&params.FolderName, validation.Type("string"), validation.Required()),
 		validation.Parameter(&params.Password, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -876,7 +877,7 @@ func (dc *FolderController) SetFolderPassword(c *gin.Context) {
 		p,
 		params.FolderName,
 		params.Password); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10011
 		res.Call(c)
 		return
@@ -924,7 +925,7 @@ func (dc *FolderController) CopyFolder(c *gin.Context) {
 		validation.Parameter(&params.FolderNames, validation.Required()),
 		validation.Parameter(&params.NewParentPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -939,7 +940,7 @@ func (dc *FolderController) CopyFolder(c *gin.Context) {
 		fns = append(fns, v)
 	}
 	if err := folderDbx.CopyFolder(params.AppId, params.UserId, p, fns, np); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10021
 		res.Call(c)
 		return
@@ -987,7 +988,7 @@ func (dc *FolderController) MoveFolder(c *gin.Context) {
 		validation.Parameter(&params.FolderNames, validation.Required()),
 		validation.Parameter(&params.NewParentPath, validation.Type("string"), validation.Required()),
 	); err != nil {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10002
 		res.Call(c)
 		return
@@ -1003,7 +1004,7 @@ func (dc *FolderController) MoveFolder(c *gin.Context) {
 	}
 	if err := folderDbx.MoveFolder(params.AppId, params.UserId, p, fns, np); err != nil {
 		log.Info(err)
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10021
 		res.Call(c)
 		return
@@ -1072,7 +1073,7 @@ func (dc *FolderController) GetRecyclebinFolderList(c *gin.Context) {
 		data.UserId)
 
 	if err != nil || parentFolderId == primitive.NilObjectID {
-		res.Error = err.Error()
+		res.Errors(err)
 		res.Code = 10006
 		res.Call(c)
 		return
