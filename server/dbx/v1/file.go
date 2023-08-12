@@ -966,7 +966,7 @@ func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, er
 	// 获取文件实际信息
 	if sf.FileInfo.Type == "image/png" || sf.FileInfo.Type == "image/jpeg" {
 		imageInfo, err := nimages.GetImageInfoByPath(path.Join(sf.Path, sf.FileName))
-		log.Info(imageInfo, err)
+		log.Info(imageInfo, err, path.Join(sf.Path, sf.FileName))
 		if err != nil {
 			return nil, err
 		}

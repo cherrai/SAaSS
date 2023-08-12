@@ -330,12 +330,42 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	// 获取上次的传输进度
 	totalSize, uploadedOffset := methods.GetUploadedOffset(&fileConfigInfo)
 	err = conf.Redisdb.Set("file_"+fileInfo["hash"]+"_totalsize", totalSize, 5*60*time.Second)
-	log.Info("cccccccccccc", totalSize, uploadedOffset)
+	log.Info("cccccccccccc", totalSize, uploadedOffset, fileConfigInfo.FileInfo.Size)
 	if err != nil {
 		res.Errors(err)
 		res.Code = 10001
 		res.Call(c)
 		return
+	}
+
+	// 已上传完毕
+	if totalSize == fileConfigInfo.FileInfo.Size {
+		code, err := methods.MergeFiles(&fileConfigInfo)
+		log.Info("MergeFiles", code, err != nil)
+		if err != nil {
+			res.Code = 10016
+			res.Errors(err)
+			res.Call(c)
+			return
+		}
+		if code == 200 {
+			// 创建静态文件
+			saveFile, err := fc.SaveFile(&fileConfigInfo)
+
+			log.Info("saveFile", fileConfigInfo.Password, saveFile, err)
+			if err != nil {
+				res.Code = 10016
+				res.Errors(err)
+				res.Call(c)
+				return
+			}
+			fileConfigInfo.ShortId = saveFile.ShortId
+			res.Data = map[string]interface{}{
+				"urls": methods.GetResponseData(&fileConfigInfo),
+			}
+			res.Call(c)
+			return
+		}
 	}
 	// 按照顺序排序
 	res.Data = map[string]interface{}{
@@ -344,7 +374,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		"uploadedOffset":    uploadedOffset,
 		"urls":              methods.GetResponseData(&fileConfigInfo),
 	}
-	log.Info(res.Data)
+	// log.Info(res.Data)
 	res.Call(c)
 }
 
