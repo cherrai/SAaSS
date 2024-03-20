@@ -162,6 +162,11 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		// validation.Parameter(&fileConfigInfo.Type, validation.Type("string"), validation.Required(), validation.Enum([]string{"Image", "Video", "Audio", "Text", "File"})),
 	); err != nil {
 		res.Errors(err)
+		// log.Info("sdadsad", err, 231312,
+		// 	reflect.TypeOf(&fileConfigInfo.ChunkSize).Elem().String(),
+
+		// 	fileConfigInfo.ChunkSize,
+		// 	c.PostForm("chunkSize"))
 		res.Code = 10002
 		res.Call(c)
 		return

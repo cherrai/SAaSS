@@ -64,8 +64,10 @@ stop() {
 
 backup() {
   backupTime=$(date +'%Y-%m-%d_%T')
-  zip -q -r ./saass_$backupTime.zip ./static
-  unzip -d ./ build_2023-07-04_21:11:13.zip
+  # zip -q -r ./saass_$backupTime.zip ./static
+  zip -q -r /home/static/saass_$backupTime.zip ./static
+
+  # unzip -d ./ build_2023-07-04_21:11:13.zip
 }
 
 remove() {

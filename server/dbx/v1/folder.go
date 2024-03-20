@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path"
+
 	// "path/filepath"
 	"strings"
 	"time"
@@ -63,7 +64,7 @@ func (fd *FolderDbx) NewFolder(appId, folderName, parentPath, authorId string) (
 }
 
 func (u *FolderDbx) GetShortId(digits int) (string, error) {
-	str := nshortid.GetSpecifiedRandomString("ABCDEFG", 1) + nshortid.GetShortId(digits)
+	str := nshortid.GetRandomStringInSpecifiedRange("ABCDEFG", 1) + nshortid.GetShortId(digits)
 
 	// 检测
 	file := new(models.Folder)

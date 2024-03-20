@@ -637,7 +637,7 @@ func (fd *FileDbx) GetFileLisByParentFolderIdOrFileNames(appId string, parentFol
 }
 
 func (u *FileDbx) GetShortId(digits int) (string, error) {
-	str := nshortid.GetSpecifiedRandomString("HIJKLMN", 1) + nshortid.GetShortId(digits)
+	str := nshortid.GetRandomStringInSpecifiedRange("HIJKLMN", 1) + nshortid.GetShortId(digits)
 
 	// 检测
 	file := new(models.File)
