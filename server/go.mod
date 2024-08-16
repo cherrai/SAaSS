@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/cherrai/nyanyago-utils v1.0.6
+	github.com/cherrai/nyanyago-utils v1.0.9
 	// github.com/cherrai/saki-sso-go v1.0.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible

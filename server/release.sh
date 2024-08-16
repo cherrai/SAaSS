@@ -1,9 +1,10 @@
 #! /bin/bash
 name="saass"
 port=16100
+DIR=$(cd $(dirname $0) && pwd)
 branch="main"
 configFilePath="config.pro.json"
-allowMethods=("backup ls stop remove gitpull proto dockerremove start logs")
+allowMethods=("unzip backup ls stop remove gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
@@ -25,7 +26,6 @@ start() {
 
   echo "-> 正在准备相关资源"
   # 获取npm配置
-  DIR=$(cd $(dirname $0) && pwd)
   cp -r ~/.ssh $DIR
   cp -r ~/.gitconfig $DIR
   git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -33,6 +33,7 @@ start() {
   echo "-> 准备构建Docker"
   docker build \
     -t $name \
+    --network host \
     $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') . \
     -f Dockerfile.multi
   rm -rf $DIR/.ssh
@@ -63,11 +64,18 @@ stop() {
 }
 
 backup() {
-  backupTime=$(date +'%Y-%m-%d_%T')
+  # backupTime=$(date +'%Y-%m-%d_%T')
   # zip -q -r ./saass_$backupTime.zip ./static
-  zip -q -r /home/static/saass_$backupTime.zip ./static
+  tar cvzf /home/project/static/saass_static.tgz -C $DIR/static .
 
   # unzip -d ./ build_2023-07-04_21:11:13.zip
+}
+
+unzip() {
+  # unzip -d ./ /home/static/saass_static.zip
+  mkdir -p $DIR/static
+  tar -zxvf /home/project/static/saass_static.tgz \
+    -C $DIR/static
 }
 
 remove() {
