@@ -41,6 +41,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 
 	appId := c.GetString("appId")
 	userId := c.GetString("userId")
+	uploadUserId := c.PostForm("uploadUserId")
 	rootPath := nstrings.StringOr(c.PostForm("rootPath"), "/")
 
 	ati, exists := c.Get("appTokenInfo")
@@ -128,9 +129,10 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			LastModified: nint.ToInt64(fileInfo["lastModified"]),
 			Hash:         fileInfo["hash"],
 		},
-		UserId:     userId,
-		AllowShare: allowShare,
-		ShareUsers: shareUsers,
+		UserId:       userId,
+		UploadUserId: nstrings.StringOr(uploadUserId, userId),
+		AllowShare:   allowShare,
+		ShareUsers:   shareUsers,
 	}
 
 	if err = validation.ValidateStruct(
@@ -156,6 +158,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 				50 * 1024 * 1024,
 			}), validation.GreaterEqual(1)),
 		validation.Parameter(&fileConfigInfo.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&fileConfigInfo.UploadUserId, validation.Type("string"), validation.Required()),
 		validation.Parameter(&fileConfigInfo.AllowShare, validation.Type("int64"), validation.Enum([]int64{2, 1, -1}), validation.Required()),
 		// validation.Parameter(&fileConfigInfo.ShareUsers, validation.Required()),
 		validation.Parameter(&fileConfigInfo.RootPath, validation.Type("string"), validation.Required()),
@@ -213,7 +216,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 	staticFilesIsExist := false
 
 	log.Info(fileConfigInfo.FileInfo.Hash)
-	sf, err := fileDbx.GetStaticFileWithHash(fileConfigInfo.FileInfo.Hash)
+	sf, err := fileDbx.GetStaticFileByHash(fileConfigInfo.FileInfo.Hash)
 	log.Info(sf, err)
 	if err != nil {
 		res.Errors(err)

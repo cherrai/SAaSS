@@ -609,6 +609,9 @@ func (dc *FileController) GetUrls(c *gin.Context) {
 
 	// 4、操作数据库
 	file, err := fileDbx.GetFileWithFileInfo(params.AppId, p, params.FileName, params.UserId)
+
+	log.Info("	file, err", file, err)
+
 	if err != nil {
 		res.Errors(err)
 		res.Code = 10002
@@ -620,7 +623,7 @@ func (dc *FileController) GetUrls(c *gin.Context) {
 	if file.AvailableRange.AllowShare == -1 {
 		// time.Duration(params.Deadline-time.Now().Unix()) * time.Second
 
-		at := methods.GetTemporaryAccessToken(file.ShortId, time.Now().Add(5*60).Unix())
+		at := methods.GetTemporaryAccessToken(file.ShortId, time.Now().Add(5*60*time.Second).Unix())
 		shortUrl = shortUrl + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
 	}
 	res.Code = 200
@@ -858,6 +861,8 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 	}
 	// 4、操作数据库
 	file, err := fileDbx.GetFileLisByParentFolderId(params.AppId, parentFolderId)
+
+	log.Info("	file, err", file, err)
 	if err != nil {
 		res.Errors(err)
 		res.Code = 10006
@@ -900,7 +905,7 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 
 				shortUrl := "/s/" + v.ShortId
 				if v.AvailableRange.AllowShare == -1 {
-					at := methods.GetTemporaryAccessToken(v.ShortId, time.Now().Add(5*60).Unix())
+					at := methods.GetTemporaryAccessToken(v.ShortId, time.Now().Add(5*60*time.Second).Unix())
 					shortUrl = shortUrl + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
 				}
 
@@ -946,6 +951,139 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 	}
 	res.Data = map[string]interface{}{
 		"total": file.Total[0].Count,
+		"list":  tempList,
+	}
+	res.Call(c)
+}
+
+// 获取已经被替换过的历史文件下载地址，
+// 下载地址以hash检索，并且必须携带一个限期token，否则禁止下载
+func (dc *FileController) GetHistoryFiles(c *gin.Context) {
+
+	// 1、 创建请求体
+	var res response.ResponseType
+	res.Code = 200
+
+	// 2、获取参数
+
+	params := struct {
+		AppId            string
+		Path             string
+		FileName         string
+		RootPath         string
+		UserId           string
+		ParentFolderPath string
+		PageNum          int64
+		PageSize         int64
+		StartTime        int64
+		EndTime          int64
+	}{
+		AppId:            c.Query("appId"),
+		RootPath:         c.Query("rootPath"),
+		UserId:           c.GetString("userId"),
+		Path:             c.Query("path"),
+		FileName:         c.Query("fileName"),
+		PageSize:         nint.ToInt64(c.Query("pageSize")),
+		PageNum:          nint.ToInt64(c.Query("pageNum")),
+		StartTime:        nint.ToInt64(c.Query("startTime")),
+		EndTime:          nint.ToInt64(c.Query("endTime")),
+		ParentFolderPath: "/",
+	}
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		params.AppId = t.AppId
+		params.RootPath = t.RootPath
+	}
+
+	log.Info("params", params)
+	// 3、校验参数
+	if err := validation.ValidateStruct(
+		&params,
+		validation.Parameter(&params.AppId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.PageNum, validation.GreaterEqual(int64(1)), validation.Required()),
+		validation.Parameter(&params.PageSize, validation.NumRange(int64(1), int64(50)), validation.Required()),
+		validation.Parameter(&params.StartTime, validation.GreaterEqual(int64(1)), validation.Required()),
+		validation.Parameter(&params.EndTime, validation.GreaterEqual(int64(1)), validation.Required()),
+	); err != nil {
+		res.Errors(err)
+		res.Code = 10002
+		res.Call(c)
+		return
+	}
+
+	params.ParentFolderPath = path.Join(params.RootPath, params.Path)
+
+	// 如果是直接根目录获取，可以检测下行不行，
+	// 譬如获取所有目录内容的时候
+	log.Info(params.ParentFolderPath)
+	parentFolderId, err := folderDbx.GetParentFolderId(params.AppId, params.ParentFolderPath, false, params.UserId)
+	log.Info("GetHistoryStaticFiles", parentFolderId)
+	if err != nil || parentFolderId == primitive.NilObjectID {
+		res.Errors(err)
+		res.Code = 10006
+		res.Call(c)
+		return
+	}
+	// 4、操作数据库
+	staticFiles, err := fileDbx.GetHistoryStaticFiles(
+		params.FileName, parentFolderId,
+		params.PageNum, params.PageSize,
+		params.StartTime, params.EndTime)
+	log.Info("GetHistoryStaticFiles", staticFiles,
+		params.FileName, parentFolderId,
+		params.PageNum, params.PageSize,
+		params.StartTime, params.EndTime)
+	if err != nil {
+		res.Errors(err)
+		res.Code = 10006
+		res.Call(c)
+		return
+	}
+	tempList := []map[string]interface{}{}
+
+	for _, staticFile := range staticFiles {
+		// pd := ""
+		// if v.AvailableRange.Password != "" {
+		// 	pd = v.AvailableRange.Password[0:2] + "******" + v.AvailableRange.Password[len(v.AvailableRange.Password)-3:len(v.AvailableRange.Password)]
+		// }
+
+		shorId := staticFile.Id.Hex()
+		shortUrl := "/s/history:" + shorId
+		at := methods.GetTemporaryAccessToken(shorId, time.Now().Add(5*60*time.Second).Unix())
+		shortUrl = shortUrl + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
+
+		log.Info("staticFile.UploadUser", staticFile.UploadUserId)
+		tempList = append(tempList, map[string]interface{}{
+			"id":           shorId,
+			"fileName":     params.FileName,
+			"path":         params.Path,
+			"uploadUserId": staticFile.UploadUserId,
+			"fileInfo": map[string]interface{}{
+				"name":           staticFile.FileInfo.Name,
+				"parentFolderId": staticFile.FileInfo.ParentFolderId.Hex(),
+				"size":           staticFile.FileInfo.Size,
+				"type":           staticFile.FileInfo.Type,
+				"suffix":         staticFile.FileInfo.Suffix,
+				"lastModified":   staticFile.FileInfo.LastModified,
+				"hash":           staticFile.FileInfo.Hash,
+				"width":          staticFile.FileInfo.Width,
+				"height":         staticFile.FileInfo.Height,
+			},
+			"createTime": staticFile.CreateTime,
+			"updateTIme": staticFile.UpdateTIme,
+			"deleteTime": staticFile.DeleteTime,
+			"urls": map[string]string{
+				"domainUrl": conf.Config.StaticPathDomain,
+				"shortUrl":  shortUrl,
+				"url":       shortUrl,
+			},
+		})
+	}
+	res.Data = map[string]interface{}{
+		"total": len(tempList),
 		"list":  tempList,
 	}
 	res.Call(c)

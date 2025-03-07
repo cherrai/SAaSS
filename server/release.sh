@@ -1,10 +1,11 @@
 #! /bin/bash
 name="saass"
+runName="$name-run"
 port=16100
 DIR=$(cd $(dirname $0) && pwd)
 branch="main"
 configFilePath="config.pro.json"
-allowMethods=("unzip backup ls stop remove gitpull proto dockerremove start logs")
+allowMethods=("run unzip backup ls stop remove gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
@@ -40,7 +41,7 @@ start() {
   rm -rf $DIR/.gitconfig
 
   echo "-> 准备运行Docker"
-  remove
+  stop
 
   docker run \
     -v $DIR/static:/static \
@@ -52,6 +53,40 @@ start() {
     -p $port:$port \
     --restart=always \
     -d $name
+
+  echo "-> 整理文件资源"
+  docker cp $name:/saass $DIR/saass
+  stop
+
+  ./ssh.sh run
+
+  rm -rf $DIR/saass
+}
+
+run() {
+  echo "-> 正在启动「${runName}」服务"
+  dockerremove
+
+  echo "-> 准备构建Docker"
+  docker build \
+    -t \
+    $runName \
+    --network host \
+    . \
+    -f Dockerfile.run.multi
+
+  echo "-> 准备运行Docker"
+  stop
+  docker run \
+    -v $DIR/static:/static \
+    -v $DIR/web:/web \
+    -v $DIR/conf.json:/conf.json \
+    -v $DIR/$configFilePath:/config.json \
+    --name=$runName \
+    $(cat /etc/hosts | sed 's/^#.*//g' | grep '[0-9][0-9]' | tr "\t" " " | awk '{print "--add-host="$2":"$1 }' | tr '\n' ' ') \
+    -p $port:$port \
+    --restart=always \
+    -d $runName
 }
 
 ls() {
@@ -61,6 +96,9 @@ ls() {
 
 stop() {
   docker stop $name
+  docker rm $name
+  docker stop $runName
+  docker rm $runName
 }
 
 backup() {

@@ -61,6 +61,13 @@ func (res *ResponseType) GetResponse() *ResponseType {
 
 	switch res.Code {
 	case 200:
+	case 10025:
+		res.Msg = "Delete failed."
+		res.CnMsg = "删除失败."
+
+	case 10024:
+		res.Msg = "Content does not exist."
+		res.CnMsg = "内容不存在."
 	case 10023:
 		res.Msg = "password required."
 		res.CnMsg = "必须输入密码."
@@ -70,11 +77,11 @@ func (res *ResponseType) GetResponse() *ResponseType {
 
 	case 10021:
 		res.Msg = "Copy or move failed."
-		res.CnMsg = "复制或移动失败"
+		res.CnMsg = "复制或移动失败."
 
 	case 10020:
 		res.Msg = "Create folder failed."
-		res.CnMsg = "创建文件夹失败"
+		res.CnMsg = "创建文件夹失败."
 
 	case 10019:
 		res.Msg = "Create file token failed."

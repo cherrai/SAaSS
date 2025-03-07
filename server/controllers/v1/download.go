@@ -38,7 +38,7 @@ func (dc *DownloadController) GetShareFilesHtml(c *gin.Context) {
 		"./web/share.html"))
 }
 
-// http://192.168.204.129:16100/api/v1/share?path=/%E5%AE%89%E8%A3%85%E5%8C%85/meow-backups&sid=EIB8v2Lluy&pwd=2ee422
+// http://192.168.204.132:16100/api/v1/share?path=/%E5%AE%89%E8%A3%85%E5%8C%85/meow-backups&sid=EIB8v2Lluy&pwd=2ee422
 func (dc *DownloadController) GetShareFiles(c *gin.Context) {
 	log.Info("GetShareFiles")
 	var res response.ResponseType
@@ -276,16 +276,46 @@ func (dc *DownloadController) Download(c *gin.Context) {
 	temporaryAccessToken := c.Query("tat")
 	isTAT := false
 	shortId := nstrings.StringOr(sid, filePath)
+
+	shortIdList := strings.Split(shortId, ":")
+
+	isHistoryStaticFile := shortIdList[0] == "history"
+
+	log.Info("isHistoryStaticFile", isHistoryStaticFile)
+	if isHistoryStaticFile && len(shortIdList) == 2 {
+		shortId = shortIdList[1]
+	}
+
 	if temporaryAccessToken != "" {
 		u := c.Query("u")
+		log.Info(u, temporaryAccessToken, shortId)
 		isTAT = ncredentials.AuthCredentials(u, temporaryAccessToken, shortId)
 	}
 
-	log.Info(folderPath, filePath, appEncryptionId == "")
+	log.Info(folderPath, filePath, appEncryptionId == "", isTAT)
 	var file *models.File
 	var err error
 	appId := ""
 	appKey := ""
+
+	if isHistoryStaticFile {
+		sf, err := fileDbx.GetStaticFileById(shortId)
+		// log.Info(sf, shortId)
+
+		if sf == nil || err != nil {
+			c.String(http.StatusNotFound, "")
+			return
+		}
+
+		processFilePath, err := dc.ProcessFile(c, sf.Path+"/"+sf.FileName)
+		// log.Info("processFilePath", processFilePath, err)
+		if err != nil {
+			c.String(http.StatusNotFound, "")
+			return
+		}
+		c.File(processFilePath)
+		return
+	}
 
 	if (folderPath == "/" && appEncryptionId == "") || sid != "" {
 		// log.Info("shortId", shortId)
@@ -374,7 +404,7 @@ func (dc *DownloadController) Download(c *gin.Context) {
 		c.String(http.StatusNotFound, "")
 		return
 	}
-	sf, err := fileDbx.GetStaticFileWithHash(file.Hash)
+	sf, err := fileDbx.GetStaticFileByHash(file.Hash)
 	log.Info(sf)
 	if err != nil || sf == nil {
 		c.String(http.StatusNotFound, "")

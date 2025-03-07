@@ -143,6 +143,7 @@ func (r Routerv1) InitFile() {
 			ResponseDataType:   "json",
 		}),
 		fc.GetUrls)
+
 	r.Group.GET(
 		role.SetRole("/file/list/get", &middleware.RoleOptionsType{
 			CheckApp:           true,
@@ -153,6 +154,17 @@ func (r Routerv1) InitFile() {
 			ResponseDataType:   "json",
 		}),
 		fc.GetFileList)
+
+	r.Group.GET(
+		role.SetRole("/file/list/history/get", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.GetHistoryFiles)
 
 	r.Group.GET(
 		role.SetRole("/file/list/shortid/get", &middleware.RoleOptionsType{

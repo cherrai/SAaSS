@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	conf "github.com/cherrai/SAaSS/config"
@@ -478,6 +480,64 @@ func (fd *FileDbx) GetFileLisByParentFolderId(appId string, parentFolderId primi
 	return results[0], nil
 }
 
+func (fd *FileDbx) GetHistoryStaticFiles(
+	fileName string, parentFolderId primitive.ObjectID,
+	pageNum, pageSize int64,
+	startTime, endTime int64,
+) ([]*models.StaticFile, error) {
+	staticFile := new(models.StaticFile)
+	params := []bson.M{
+		{
+			"$match": bson.M{
+				"$and": []bson.M{
+					{
+						"fileInfo.name":           strings.TrimSuffix(fileName, filepath.Ext(fileName)),
+						"fileInfo.suffix":         filepath.Ext(fileName),
+						"fileInfo.parentFolderId": parentFolderId,
+					},
+					{
+						"status": 1,
+					},
+					{
+						"createTime": bson.M{
+							"$gte": startTime,
+							"$lt":  endTime,
+						},
+					},
+					{
+						// 有效期不能大于一个月
+						"createTime": bson.M{
+							"$gte": time.Now().Unix() - 3600*24*30,
+						},
+					},
+				},
+			},
+		},
+		{
+			"$sort": bson.M{
+				"createTime": -1,
+				"updateTime": -1,
+			},
+		},
+		{
+			"$skip": pageSize * (pageNum - 1),
+		},
+		{
+			"$limit": pageSize,
+		},
+	}
+
+	var results []*models.StaticFile
+	opts, err := staticFile.GetCollection().Aggregate(context.TODO(), params)
+	if err != nil {
+		return nil, err
+	}
+	if err = opts.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 func (fd *FileDbx) GetFileLisByParentFolderIdList(appId string, parentFolderIdList []primitive.ObjectID, pageNum, pageSize int64, status []int64) ([]*models.File, error) {
 	file := new(models.File)
 	params := []bson.M{
@@ -802,7 +862,39 @@ func (fd *FileDbx) GetFileWithParentFolderId(appId string, parentFolderId primit
 	return results[0], nil
 }
 
-func (fd *FileDbx) GetStaticFileWithHash(hash string) (*models.StaticFile, error) {
+func (fd *FileDbx) GetStaticFileById(id string) (*models.StaticFile, error) {
+	staticFile := new(models.StaticFile)
+	_id, _ := primitive.ObjectIDFromHex(id)
+	params := []bson.M{
+		{
+			"$match": bson.M{
+				"$and": []bson.M{
+					{
+						"_id": _id,
+					},
+					{
+						"status": 1,
+					},
+				},
+			},
+		},
+	}
+
+	var results []*models.StaticFile
+	opts, err := staticFile.GetCollection().Aggregate(context.TODO(), params)
+	if err != nil {
+		return nil, err
+	}
+	if err = opts.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, nil
+	}
+	return results[0], nil
+}
+
+func (fd *FileDbx) GetStaticFileByHash(hash string) (*models.StaticFile, error) {
 	staticFile := new(models.StaticFile)
 	params := []bson.M{
 		{

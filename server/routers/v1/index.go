@@ -23,4 +23,5 @@ func (r Routerv1) Init() {
 	r.InitFolder()
 	r.InitApp()
 	r.InitDownload()
+	r.InitCloudServiceFile()
 }

@@ -37,3 +37,10 @@ dump.rdb
 /static/
 /protos/*.go
 !/protos/coding.go
+
+
+
+go.work*
+saass
+ssh*
+data

@@ -1,0 +1,10 @@
+FROM alpine:3.10
+
+WORKDIR /
+
+COPY saass \
+  /
+
+EXPOSE 16100
+
+CMD ["./saass","--config","config.json"]

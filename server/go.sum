@@ -1,7 +1,7 @@
 github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cbYE=
 github.com/cespare/xxhash/v2 v2.1.2/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/cherrai/nyanyago-utils v1.0.9 h1:YU58Y7/igzUZ2Ikdej0I/Jn3ydzVKOlXhemgJq3ND2I=
-github.com/cherrai/nyanyago-utils v1.0.9/go.mod h1:H++IB1dTsme84GxV333wrmLtssAK9iq2KoU4VeoxNV4=
+github.com/cherrai/nyanyago-utils v1.0.17 h1:FJDdG5EKMVH8oiZ2+34UH4zw2nJhGRoKADW5+EfgGts=
+github.com/cherrai/nyanyago-utils v1.0.17/go.mod h1:qWiApyCPY+I8WuqoTg5ZXyGzHd5SiYD5jJUKtvaR+IM=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

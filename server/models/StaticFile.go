@@ -14,24 +14,28 @@ import (
 
 // // 如果源文件hash一样
 // // 参数也是一样，那就是重复上传
-// type Process struct {
-// 	// x-saass-process=image/resize,160,70
-// 	Parameter string `bson:"parameter" json:"parameter,omitempty"`
-// 	// 仅仅存储Hash即可
-// 	ProcessInfo ProcessInfo `bson:"processInfo" json:"processInfo,omitempty"`
-// }
-// type ProcessInfo struct {
-// 	Hash string `bson:"hash" json:"hash,omitempty"`
-// }
+//
+//	type Process struct {
+//		// x-saass-process=image/resize,160,70
+//		Parameter string `bson:"parameter" json:"parameter,omitempty"`
+//		// 仅仅存储Hash即可
+//		ProcessInfo ProcessInfo `bson:"processInfo" json:"processInfo,omitempty"`
+//	}
+//
+//	type ProcessInfo struct {
+//		Hash string `bson:"hash" json:"hash,omitempty"`
+//	}
 type FileInfo struct {
-	Name         string `bson:"name" json:"name,omitempty"`
-	Size         int64  `bson:"size" json:"size,omitempty"`
-	Type         string `bson:"type" json:"type,omitempty"`
-	Suffix       string `bson:"suffix" json:"suffix,omitempty"`
-	LastModified int64  `bson:"lastModified" json:"lastModified,omitempty"`
-	Hash         string `bson:"hash" json:"hash,omitempty"`
-	Width        int64  `bson:"width" json:"width,omitempty"`
-	Height       int64  `bson:"height" json:"height,omitempty"`
+	Name string `bson:"name" json:"name,omitempty"`
+	// 父级文件夹Id
+	ParentFolderId primitive.ObjectID `bson:"parentFolderId" json:"parentFolderId,omitempty"`
+	Size           int64              `bson:"size" json:"size,omitempty"`
+	Type           string             `bson:"type" json:"type,omitempty"`
+	Suffix         string             `bson:"suffix" json:"suffix,omitempty"`
+	LastModified   int64              `bson:"lastModified" json:"lastModified,omitempty"`
+	Hash           string             `bson:"hash" json:"hash,omitempty"`
+	Width          int64              `bson:"width" json:"width,omitempty"`
+	Height         int64              `bson:"height" json:"height,omitempty"`
 	// Process      Process `bson:"process" json:"process,omitempty"`
 }
 
@@ -45,6 +49,8 @@ type StaticFile struct {
 
 	FileInfo FileInfo `bson:"fileInfo" json:"fileInfo,omitempty"`
 
+	// 创建人
+	UploadUserId string `bson:"uploadUserId" json:"uploadUserId,omitempty"`
 	// DeleteStatus:
 	// 1 normal
 	// 0 not accessible
@@ -111,6 +117,7 @@ func (m *StaticFile) Validate() error {
 		m,
 		validation.Parameter(&m.FileName, validation.Required()),
 		validation.Parameter(&m.Path, validation.Required()),
+		validation.Parameter(&m.UploadUserId, validation.Required()),
 		validation.Parameter(&m.Status, validation.Enum([]int{1, -1, -2})),
 		validation.Parameter(&m.CreateTime, validation.Required()),
 	)

@@ -17,6 +17,7 @@ func GetStaticFilePathAndFileName(hash string, suffix string) (path, fileName st
 
 func GetTemporaryAccessToken(id string, deadline int64) map[string]string {
 	t := time.Duration(deadline-time.Now().Unix()) * time.Second
+
 	user, temporaryAccessToken := ncredentials.GenerateCredentials(id, t)
 	return map[string]string{
 		"user":                 user,

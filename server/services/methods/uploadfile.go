@@ -14,6 +14,7 @@ import (
 	"github.com/cherrai/SAaSS/models"
 	"github.com/cherrai/SAaSS/services/typings"
 	"github.com/cherrai/nyanyago-utils/nfile"
+	"github.com/cherrai/nyanyago-utils/nstrings"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -141,14 +142,16 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 		FileName: fileName,
 		Path:     path,
 		FileInfo: models.FileInfo{
-			Name:         fileConfigInfo.FileInfo.Name,
-			Size:         fileConfigInfo.FileInfo.Size,
-			Type:         fileConfigInfo.FileInfo.Type,
-			Suffix:       fileConfigInfo.FileInfo.Suffix,
-			LastModified: fileConfigInfo.FileInfo.LastModified,
-			Hash:         fileConfigInfo.FileInfo.Hash,
+			Name:           fileConfigInfo.FileInfo.Name,
+			ParentFolderId: fileConfigInfo.ParentFolderId,
+			Size:           fileConfigInfo.FileInfo.Size,
+			Type:           fileConfigInfo.FileInfo.Type,
+			Suffix:         fileConfigInfo.FileInfo.Suffix,
+			LastModified:   fileConfigInfo.FileInfo.LastModified,
+			Hash:           fileConfigInfo.FileInfo.Hash,
 		},
-		Status: 1,
+		UploadUserId: nstrings.StringOr(fileConfigInfo.UploadUserId, fileConfigInfo.UserId),
+		Status:       1,
 	}
 	_, err = fileDbx.SaveStaticFile(&staticFile)
 	if err != nil {

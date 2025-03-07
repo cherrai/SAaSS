@@ -25,6 +25,7 @@ type TempFileConfigInfo struct {
 	Password       string
 	FileInfo       FileInfo
 	UserId         string
+	UploadUserId   string
 	AllowShare     int64
 	ShareUsers     []string
 	// Parameter      Parameter
