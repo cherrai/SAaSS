@@ -5,7 +5,7 @@ port=16100
 DIR=$(cd $(dirname $0) && pwd)
 branch="main"
 configFilePath="config.pro.json"
-allowMethods=("run unzip backup ls stop remove gitpull proto dockerremove start logs")
+allowMethods=("runLogs run unzip backup ls stop remove gitpull proto dockerremove start logs")
 
 gitpull() {
   echo "-> 正在拉取远程仓库"
@@ -112,7 +112,7 @@ backup() {
 unzip() {
   # unzip -d ./ /home/static/saass_static.zip
   mkdir -p $DIR/static
-  tar -zxvf /home/project/static/saass_static.tgz \
+  tar -zxvf $DIR/saass_static.tgz \
     -C $DIR/static
 }
 
@@ -130,6 +130,10 @@ proto() {
 
 logs() {
   docker logs -f $name
+}
+
+runLogs() {
+  docker logs -f $runName
 }
 
 main() {
