@@ -70,7 +70,7 @@ func InitRouter() {
 	// 	// 测试调整分辨率
 	// 	c.File("./static/1589036065311.jpeg")
 	// })
-	Router.StaticFS("/static", http.Dir("./static"))
+	Router.StaticFS("/static", http.Dir("./static/static"))
 
 	// midArr := [...]gin.HandlerFunc{GinMiddleware("*"), middleware.Authorize()}
 	// fmt.Println(midArr)
@@ -78,7 +78,7 @@ func InitRouter() {
 	// 	//fmt.Println(index, "\t",value)
 	// 	Router.Use(midFunc)
 	// }
-	Router.StaticFS("/public", http.Dir("./public"))
+	// Router.StaticFS("/public", http.Dir("./public"))
 	routers.InitRouter(Router)
 
 }
