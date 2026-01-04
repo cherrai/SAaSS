@@ -128,6 +128,9 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 			Suffix:       fileType,
 			LastModified: nint.ToInt64(fileInfo["lastModified"]),
 			Hash:         fileInfo["hash"],
+			Width:        nint.ToInt64(fileInfo["width"]),
+			Height:       nint.ToInt64(fileInfo["height"]),
+			Exif:         fileInfo["exif"],
 		},
 		UserId:       userId,
 		UploadUserId: nstrings.StringOr(uploadUserId, userId),
@@ -376,11 +379,18 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		}
 	}
 	// 按照顺序排序
-	res.Data = map[string]interface{}{
-		"token":             token,
-		"uploadedTotalSize": totalSize,
-		"uploadedOffset":    uploadedOffset,
-		"urls":              methods.GetResponseData(&fileConfigInfo),
+	if token == "" {
+		res.Data = map[string]interface{}{
+			"urls": methods.GetResponseData(&fileConfigInfo),
+		}
+	} else {
+		res.Data = map[string]interface{}{
+			"token":             token,
+			"uploadedTotalSize": totalSize,
+			"uploadedOffset":    uploadedOffset,
+			"chunkSize":         fileConfigInfo.ChunkSize,
+			"urls":              methods.GetResponseData(&fileConfigInfo),
+		}
 	}
 	// log.Info(res.Data)
 	res.Call(c)
@@ -400,6 +410,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 
 	// 检查文件是否存在
 	file, err := c.FormFile("files")
+	log.Info("file", file.Size)
 	if err != nil {
 		res.Code = 10016
 		res.Errors(err)
@@ -420,7 +431,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		res.Call(c)
 		return
 	}
-	// log.Info("fileInfoMap", fileInfoMap["final"])
+	// log.Info("fileInfoMap", fileInfoMap["final"], file.Size)
 
 	totalSize, err := conf.Redisdb.Get("file_" + fileConfigInfo.FileInfo.Hash + "_totalsize")
 	if err != nil {
@@ -433,6 +444,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	// 当final等于no的同时size等于0，则不允许
 	if fileInfoMap["final"] == "no" && file.Size == 0 {
 		res.Code = 10016
+		res.Error = "There was an error in slicing the uploaded file."
 		res.Call(c)
 		return
 	}

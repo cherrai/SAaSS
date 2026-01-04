@@ -538,26 +538,40 @@ func (fd *FileDbx) GetHistoryStaticFiles(
 	return results, nil
 }
 
-func (fd *FileDbx) GetFileLisByParentFolderIdList(appId string, parentFolderIdList []primitive.ObjectID, pageNum, pageSize int64, status []int64) ([]*models.File, error) {
+func (fd *FileDbx) GetFileLisByParentFolderIdList(appId string, parentFolderIdList []primitive.ObjectID, pageNum, pageSize int64, status []int64, keywords []string) ([]*models.File, error) {
 	file := new(models.File)
+
+	var fileNameFilter bson.M
+	if len(keywords) > 0 {
+		var orConditions []bson.M
+		for _, kw := range keywords {
+			orConditions = append(orConditions, bson.M{
+				"fileName": bson.M{
+					"$regex":   kw,
+					"$options": "i",
+				},
+			})
+		}
+		fileNameFilter = bson.M{"$or": orConditions}
+	}
+
+	andConditions := []bson.M{
+		{"appId": appId},
+		{"parentFolderId": bson.M{"$in": parentFolderIdList}},
+		{"status": bson.M{"$in": status}},
+	}
+
+	// 如果有关键词，则加进去
+	if fileNameFilter != nil {
+		andConditions = append(andConditions, fileNameFilter)
+	}
+
+	log.Info("andConditions", fileNameFilter)
+
 	params := []bson.M{
 		{
 			"$match": bson.M{
-				"$and": []bson.M{
-					{
-						"appId": appId,
-					},
-					{
-						"parentFolderId": bson.M{
-							"$in": parentFolderIdList,
-						},
-					},
-					{
-						"status": bson.M{
-							"$in": status,
-						},
-					},
-				},
+				"$and": andConditions,
 			},
 		},
 		{
@@ -1049,6 +1063,19 @@ func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 	return file, nil
 }
 
+func (fd *FileDbx) adjustDimensions(width, height, orientation int64) (adjustedWidth, adjustedHeight int64) {
+	switch orientation {
+	case 1, 2: // 正常或水平翻转
+		return width, height
+	case 3, 4: // 180度旋转或垂直翻转
+		return width, height
+	case 5, 6, 7, 8: // 需要交换宽高的方向
+		return height, width
+	default:
+		return width, height
+	}
+}
+
 func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, error) {
 	// 先检测状态正常的有没有
 	nfile.IsExists(sf.Path + "/" + sf.FileName)
@@ -1062,8 +1089,9 @@ func (fd *FileDbx) SaveStaticFile(sf *models.StaticFile) (*models.StaticFile, er
 		if err != nil {
 			return nil, err
 		}
-		sf.FileInfo.Width = imageInfo.Width
-		sf.FileInfo.Height = imageInfo.Height
+		w, h := fd.adjustDimensions(imageInfo.Width, imageInfo.Height, imageInfo.Orientation)
+		sf.FileInfo.Width = w
+		sf.FileInfo.Height = h
 	}
 
 	_, err := sf.GetCollection().InsertOne(context.TODO(), sf)

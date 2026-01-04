@@ -149,6 +149,7 @@ func MergeFiles(fileConfigInfo *typings.TempFileConfigInfo) (code int64, err err
 			Suffix:         fileConfigInfo.FileInfo.Suffix,
 			LastModified:   fileConfigInfo.FileInfo.LastModified,
 			Hash:           fileConfigInfo.FileInfo.Hash,
+			Exif:           fileConfigInfo.FileInfo.Exif,
 		},
 		UploadUserId: nstrings.StringOr(fileConfigInfo.UploadUserId, fileConfigInfo.UserId),
 		Status:       1,

@@ -1,6 +1,6 @@
 module github.com/cherrai/SAaSS
 
-go 1.18
+go 1.22
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5

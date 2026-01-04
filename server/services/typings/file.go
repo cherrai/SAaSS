@@ -43,5 +43,8 @@ type FileInfo struct {
 	Type         string
 	Suffix       string
 	LastModified int64
+	Width        int64
+	Height       int64
 	Hash         string
+	Exif         string
 }

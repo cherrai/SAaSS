@@ -58,7 +58,7 @@ func (dc *AppController) GetAppToken(c *gin.Context) {
 	}
 	res.Data = map[string]interface{}{
 		"token":    ck,
-		"deadline": time.Now().Unix() + 5*60,
+		"deadline": time.Now().Unix() + 24*60*60,
 	}
 	res.Code = 200
 	res.Call(c)

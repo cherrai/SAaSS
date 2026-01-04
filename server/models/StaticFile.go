@@ -36,6 +36,7 @@ type FileInfo struct {
 	Hash           string             `bson:"hash" json:"hash,omitempty"`
 	Width          int64              `bson:"width" json:"width,omitempty"`
 	Height         int64              `bson:"height" json:"height,omitempty"`
+	Exif           string             `bson:"exif" json:"exif,omitempty"`
 	// Process      Process `bson:"process" json:"process,omitempty"`
 }
 

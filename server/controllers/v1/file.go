@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	conf "github.com/cherrai/SAaSS/config"
@@ -1201,6 +1202,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		UserId   string
 		PageNum  int64
 		PageSize int64
+		Keywords string
 	}{
 		AppId:    c.Query("appId"),
 		RootPath: c.Query("rootPath"),
@@ -1208,6 +1210,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		Path:     c.Query("path"),
 		PageNum:  nint.ToInt64(c.Query("pageNum")),
 		PageSize: nint.ToInt64(c.Query("pageSize")),
+		Keywords: c.Query("keywords"),
 	}
 	ati, exists := c.Get("appTokenInfo")
 	if exists {
@@ -1227,6 +1230,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 			validation.GreaterEqual(1), validation.Required()),
 		validation.Parameter(&params.PageSize, validation.Type("int64"),
 			validation.GreaterEqual(1), validation.LessEqual(50), validation.Required()),
+		validation.Parameter(&params.Keywords, validation.Type("string")),
 	); err != nil {
 		res.Errors(err)
 		res.Code = 10002
@@ -1265,14 +1269,17 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 		pathMap[v.Id] = path.Join(pathMap[v.ParentFolderId], v.FolderName)
 		parentFolderIdList = append(parentFolderIdList, v.Id)
 	}
-	log.Info("pathMap", pathMap)
+	// log.Info("pathMap", params.keywords, strings.Split(params.keywords, ";"))
+
+	keywords := strings.Split(params.Keywords, ",")
+
 	// 4、操作数据库
 	files, err := fileDbx.GetFileLisByParentFolderIdList(
 		params.AppId,
 		parentFolderIdList,
 		params.PageNum,
 		params.PageSize,
-		[]int64{1, 0})
+		[]int64{1, 0}, keywords)
 
 	if err != nil {
 		res.Errors(err)
@@ -1288,7 +1295,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 	if len(files) == 0 {
 		res.Data = map[string]interface{}{
 			"total": 0,
-			"list":  len(files),
+			"list":  files,
 		}
 		res.Call(c)
 		return
@@ -1313,6 +1320,12 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 				// if v.AvailableRange.Password != "" {
 				// 	pd = v.AvailableRange.Password[0:2] + "******" + v.AvailableRange.Password[len(v.AvailableRange.Password)-3:len(v.AvailableRange.Password)]
 				// }
+
+				shortUrl := "/s/" + v.ShortId
+				if v.AvailableRange.AllowShare == -1 {
+					at := methods.GetTemporaryAccessToken(v.ShortId, time.Now().Add(5*60*time.Second).Unix())
+					shortUrl = shortUrl + "?u=" + at["user"] + "&tat=" + at["temporaryAccessToken"]
+				}
 				tempList = append(tempList, map[string]interface{}{
 					"id":             v.Id,
 					"shortId":        v.ShortId,
@@ -1335,7 +1348,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 					"deleteTime":     v.DeleteTime,
 					"urls": map[string]string{
 						"domainUrl": conf.Config.StaticPathDomain,
-						"shortUrl":  "/s/" + v.ShortId,
+						"shortUrl":  shortUrl,
 						"url":       "/s" + path.Join(pathMap[v.ParentFolderId], v.FileName) + "?a=" + conf.AppList[v.AppId].EncryptionId + "&r=" + params.RootPath,
 					},
 					"fileInfo": map[string]interface{}{
@@ -1445,7 +1458,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 		parentFolderIdList,
 		params.PageNum,
 		params.PageSize,
-		[]int64{-1})
+		[]int64{-1}, []string{})
 	// files, err := fileDbx.GetFileLisByAuthorId(
 	// 	params.AppId,
 	// 	params.UserId,
