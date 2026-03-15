@@ -23,8 +23,9 @@ type FileAvailableRange struct {
 	// -1 就是不限制 非-1则就是要和隔壁的比较大小
 	VisitCount int64 `bson:"visitCount" json:"visitCount,omitempty"`
 	// ExpirationTime Unix timestamp
-	ExpirationTime int64  `bson:"expirationTime" json:"expirationTime,omitempty"`
-	Password       string `bson:"password" json:"password,omitempty"`
+	ExpirationTime   int64  `bson:"expirationTime" json:"expirationTime,omitempty"`
+	AutoExtendPeriod int64  `bson:"autoExtendPeriod" json:"autoExtendPeriod,omitempty"`
+	Password         string `bson:"password" json:"password,omitempty"`
 	// 创建人
 	AuthorId string `bson:"authorId" json:"authorId,omitempty"`
 	// 是否允许共享
@@ -115,6 +116,9 @@ func (m *File) Default() error {
 	}
 	if m.AvailableRange.ExpirationTime == 0 {
 		m.AvailableRange.ExpirationTime = -1
+	}
+	if m.AvailableRange.AutoExtendPeriod == 0 {
+		m.AvailableRange.AutoExtendPeriod = -1
 	}
 
 	if err := m.Validate(); err != nil {

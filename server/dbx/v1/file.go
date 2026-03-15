@@ -96,6 +96,28 @@ func (fd *FileDbx) ExpiredFile(id primitive.ObjectID) error {
 	return nil
 }
 
+func (fd *FileDbx) RenewableFile(id primitive.ObjectID, renewalTime int64) error {
+	file := new(models.File)
+	_, err := file.GetCollection().UpdateMany(context.TODO(),
+		bson.M{
+			"$and": []bson.M{
+				{
+					"_id": id,
+				},
+			},
+		}, bson.M{
+			"$set": bson.M{
+				"availableRange.expirationTime": renewalTime,
+				"lastUpdateTime":                time.Now().Unix(),
+			},
+		}, options.Update().SetUpsert(false))
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (fd *FileDbx) VisitFile(id primitive.ObjectID) error {
 	file := new(models.File)
 	_, err := file.GetCollection().UpdateMany(context.TODO(),
@@ -1036,6 +1058,7 @@ func (fd *FileDbx) SaveFile(file *models.File) (*models.File, error) {
 		getFile.DeleteTime = -1
 		getFile.AvailableRange.VisitCount = file.AvailableRange.VisitCount
 		getFile.AvailableRange.ExpirationTime = file.AvailableRange.ExpirationTime
+		getFile.AvailableRange.AutoExtendPeriod = file.AvailableRange.AutoExtendPeriod
 		getFile.AvailableRange.Password = file.AvailableRange.Password
 		getFile.AvailableRange.AllowShare = file.AvailableRange.AllowShare
 		getFile.AvailableRange.ShareUsers = file.AvailableRange.ShareUsers

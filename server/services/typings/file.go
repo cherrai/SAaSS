@@ -18,16 +18,17 @@ type TempFileConfigInfo struct {
 	TempFolderPath      string
 	TempChuckFolderPath string
 	// Type                string
-	ChunkSize      int64
-	CreateTime     int64
-	ExpirationTime int64
-	VisitCount     int64
-	Password       string
-	FileInfo       FileInfo
-	UserId         string
-	UploadUserId   string
-	AllowShare     int64
-	ShareUsers     []string
+	ChunkSize        int64
+	CreateTime       int64
+	ExpirationTime   int64
+	AutoExtendPeriod int64
+	VisitCount       int64
+	Password         string
+	FileInfo         FileInfo
+	UserId           string
+	UploadUserId     string
+	AllowShare       int64
+	ShareUsers       []string
 	// Parameter      Parameter
 }
 

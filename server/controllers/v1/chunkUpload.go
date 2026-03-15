@@ -116,11 +116,12 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 		TempFolderPath:      tempFolderPath,
 		TempChuckFolderPath: tempFolderPath + "/chuck/",
 		// Type:                typestr,
-		ChunkSize:      nint.ToInt64(c.PostForm("chunkSize")),
-		CreateTime:     time.Now().Unix(),
-		ExpirationTime: nint.ToInt64(c.PostForm("expirationTime")),
-		VisitCount:     nint.ToInt64(c.PostForm("visitCount")),
-		Password:       c.PostForm("password"),
+		ChunkSize:        nint.ToInt64(c.PostForm("chunkSize")),
+		CreateTime:       time.Now().Unix(),
+		ExpirationTime:   nint.ToInt64(c.PostForm("expirationTime")),
+		AutoExtendPeriod: nint.ToInt64(c.PostForm("autoExtendPeriod")),
+		VisitCount:       nint.ToInt64(c.PostForm("visitCount")),
+		Password:         c.PostForm("password"),
 		FileInfo: typings.FileInfo{
 			Name:         fileNameOnly,
 			Size:         nint.ToInt64(fileInfo["size"]),
@@ -258,6 +259,7 @@ func (fc *ChunkUploadController) CreateChunk(c *gin.Context) {
 				})
 			}
 			file.AvailableRange.ExpirationTime = fileConfigInfo.ExpirationTime
+			file.AvailableRange.AutoExtendPeriod = fileConfigInfo.AutoExtendPeriod
 			fileConfigInfo.ShortId = file.ShortId
 
 			_, err := fileDbx.UpdateFile(file)
@@ -565,12 +567,13 @@ func (fc *ChunkUploadController) SaveFile(fConfig *typings.TempFileConfigInfo) (
 		ParentFolderId: fConfig.ParentFolderId,
 		Status:         1,
 		AvailableRange: models.FileAvailableRange{
-			VisitCount:     fConfig.VisitCount,
-			ExpirationTime: fConfig.ExpirationTime,
-			Password:       fConfig.Password,
-			AuthorId:       fConfig.UserId,
-			AllowShare:     fConfig.AllowShare,
-			ShareUsers:     su,
+			VisitCount:       fConfig.VisitCount,
+			ExpirationTime:   fConfig.ExpirationTime,
+			AutoExtendPeriod: fConfig.AutoExtendPeriod,
+			Password:         fConfig.Password,
+			AuthorId:         fConfig.UserId,
+			AllowShare:       fConfig.AllowShare,
+			ShareUsers:       su,
 		},
 		Hash: fConfig.FileInfo.Hash,
 	}

@@ -244,10 +244,17 @@ func (dc *DownloadController) FilterFile(file *models.File) error {
 		fileDbx.FileNotAccessible(file.Id)
 		return errors.New("404")
 	}
-	if file.AvailableRange.ExpirationTime != -1 && file.AvailableRange.ExpirationTime <= time.Now().Unix() {
-		// 已过期
-		fileDbx.ExpiredFile(file.Id)
-		return errors.New("404")
+	if file.AvailableRange.ExpirationTime != -1 {
+		if file.AvailableRange.ExpirationTime <= time.Now().Unix() {
+			// 已过期
+			fileDbx.ExpiredFile(file.Id)
+			return errors.New("404")
+		}
+		// 没有过期，则自动续期
+
+		if file.AvailableRange.AutoExtendPeriod != -1 {
+			fileDbx.RenewableFile(file.Id, time.Now().Unix()+file.AvailableRange.AutoExtendPeriod)
+		}
 	}
 	// 检测有效期
 	return nil
