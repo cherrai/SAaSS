@@ -378,6 +378,128 @@ func (dc *FileController) SetFileSharing(c *gin.Context) {
 	res.Call(c)
 }
 
+func (dc *FileController) SetFileExpirationTime(c *gin.Context) {
+	// 1、 创建请求体
+	var res response.ResponseType
+	res.Code = 200
+
+	// 2、获取参数
+
+	params := struct {
+		AppId          string
+		UserId         string
+		RootPath       string
+		Path           string
+		FileNames      map[string]string
+		ExpirationTime int64
+	}{
+		AppId:          c.GetString("appId"),
+		UserId:         c.GetString("userId"),
+		RootPath:       c.PostForm("rootPath"),
+		Path:           c.PostForm("path"),
+		FileNames:      c.PostFormMap("fileNames"),
+		ExpirationTime: nint.ToInt64(c.PostForm("expirationTime")),
+	}
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		params.RootPath = t.RootPath
+	}
+
+	// 3、校验参数
+	if err := validation.ValidateStruct(
+		&params,
+		validation.Parameter(&params.AppId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.FileNames, validation.Required()),
+		validation.Parameter(&params.ExpirationTime, validation.Type("int64"), validation.Required()),
+	); err != nil {
+		res.Errors(err)
+		res.Code = 10002
+		res.Call(c)
+		return
+	}
+
+	fns := []string{}
+	for _, v := range params.FileNames {
+		fns = append(fns, v)
+	}
+	p := path.Join(params.RootPath, params.Path)
+
+	// 4、操作数据库
+	if err := fileDbx.SetFileExpirationTime(params.AppId, params.UserId, p, fns, params.ExpirationTime); err != nil {
+		res.Errors(err)
+		res.Code = 10011
+		res.Call(c)
+		return
+	}
+	res.Code = 200
+	res.Call(c)
+}
+
+func (dc *FileController) SetFileAutoExtendPeriod(c *gin.Context) {
+	// 1、 创建请求体
+	var res response.ResponseType
+	res.Code = 200
+
+	// 2、获取参数
+
+	params := struct {
+		AppId            string
+		UserId           string
+		RootPath         string
+		Path             string
+		FileNames        map[string]string
+		AutoExtendPeriod int64
+	}{
+		AppId:            c.GetString("appId"),
+		UserId:           c.GetString("userId"),
+		RootPath:         c.PostForm("rootPath"),
+		Path:             c.PostForm("path"),
+		FileNames:        c.PostFormMap("fileNames"),
+		AutoExtendPeriod: nint.ToInt64(c.PostForm("autoExtendPeriod")),
+	}
+	ati, exists := c.Get("appTokenInfo")
+	if exists {
+		t := ati.(*typings.AppTokenInfo)
+		params.RootPath = t.RootPath
+	}
+
+	// 3、校验参数
+	if err := validation.ValidateStruct(
+		&params,
+		validation.Parameter(&params.AppId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.UserId, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.Path, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.RootPath, validation.Type("string"), validation.Required()),
+		validation.Parameter(&params.FileNames, validation.Required()),
+		validation.Parameter(&params.AutoExtendPeriod, validation.Type("int64"), validation.Required()),
+	); err != nil {
+		res.Errors(err)
+		res.Code = 10002
+		res.Call(c)
+		return
+	}
+
+	fns := []string{}
+	for _, v := range params.FileNames {
+		fns = append(fns, v)
+	}
+	p := path.Join(params.RootPath, params.Path)
+
+	// 4、操作数据库
+	if err := fileDbx.SetFileAutoExtendPeriod(params.AppId, params.UserId, p, fns, params.AutoExtendPeriod); err != nil {
+		res.Errors(err)
+		res.Code = 10011
+		res.Call(c)
+		return
+	}
+	res.Code = 200
+	res.Call(c)
+}
+
 func (dc *FileController) SetFilePassword(c *gin.Context) {
 
 	// 1、 创建请求体
@@ -770,12 +892,13 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 			// "path":           params.Path,
 			"parentFolderId": v.ParentFolderId.Hex(),
 			"availableRange": map[string]interface{}{
-				"visitCount":     v.AvailableRange.VisitCount,
-				"expirationTime": v.AvailableRange.ExpirationTime,
-				"password":       v.AvailableRange.Password,
-				"allowShare":     v.AvailableRange.AllowShare,
-				"shareUsers":     v.AvailableRange.ShareUsers,
-				"authorId":       v.AvailableRange.AuthorId,
+				"visitCount":       v.AvailableRange.VisitCount,
+				"expirationTime":   v.AvailableRange.ExpirationTime,
+				"autoExtendPeriod": v.AvailableRange.AutoExtendPeriod,
+				"password":         v.AvailableRange.Password,
+				"allowShare":       v.AvailableRange.AllowShare,
+				"shareUsers":       v.AvailableRange.ShareUsers,
+				"authorId":         v.AvailableRange.AuthorId,
 			},
 			"usage": map[string]interface{}{
 				"visitCount": v.Usage.VisitCount,
@@ -797,6 +920,7 @@ func (dc *FileController) GetFileByShortId(c *gin.Context) {
 				"hash":         sv.FileInfo.Hash,
 				"width":        sv.FileInfo.Width,
 				"height":       sv.FileInfo.Height,
+				"exif":         sv.FileInfo.Exif,
 			},
 		}
 	}
@@ -917,12 +1041,13 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 					"path":           params.Path,
 					"parentFolderId": v.ParentFolderId.Hex(),
 					"availableRange": map[string]interface{}{
-						"visitCount":     v.AvailableRange.VisitCount,
-						"expirationTime": v.AvailableRange.ExpirationTime,
-						"password":       v.AvailableRange.Password,
-						"allowShare":     v.AvailableRange.AllowShare,
-						"shareUsers":     v.AvailableRange.ShareUsers,
-						"authorId":       v.AvailableRange.AuthorId,
+						"visitCount":       v.AvailableRange.VisitCount,
+						"expirationTime":   v.AvailableRange.ExpirationTime,
+						"autoExtendPeriod": v.AvailableRange.AutoExtendPeriod,
+						"password":         v.AvailableRange.Password,
+						"allowShare":       v.AvailableRange.AllowShare,
+						"shareUsers":       v.AvailableRange.ShareUsers,
+						"authorId":         v.AvailableRange.AuthorId,
 					},
 					"usage": map[string]interface{}{
 						"visitCount": v.Usage.VisitCount,
@@ -944,6 +1069,7 @@ func (dc *FileController) GetFileList(c *gin.Context) {
 						"hash":         sv.FileInfo.Hash,
 						"width":        sv.FileInfo.Width,
 						"height":       sv.FileInfo.Height,
+						"exif":         sv.FileInfo.Exif,
 					},
 				})
 				break
@@ -1072,6 +1198,7 @@ func (dc *FileController) GetHistoryFiles(c *gin.Context) {
 				"hash":           staticFile.FileInfo.Hash,
 				"width":          staticFile.FileInfo.Width,
 				"height":         staticFile.FileInfo.Height,
+				"exif":           staticFile.FileInfo.Exif,
 			},
 			"createTime": staticFile.CreateTime,
 			"updateTIme": staticFile.UpdateTIme,
@@ -1333,12 +1460,13 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 					"path":           pathMap[v.ParentFolderId],
 					"parentFolderId": v.ParentFolderId.Hex(),
 					"availableRange": map[string]interface{}{
-						"visitCount":     v.AvailableRange.VisitCount,
-						"expirationTime": v.AvailableRange.ExpirationTime,
-						"password":       v.AvailableRange.Password,
-						"allowShare":     v.AvailableRange.AllowShare,
-						"shareUsers":     v.AvailableRange.ShareUsers,
-						"authorId":       v.AvailableRange.AuthorId,
+						"visitCount":       v.AvailableRange.VisitCount,
+						"expirationTime":   v.AvailableRange.ExpirationTime,
+						"autoExtendPeriod": v.AvailableRange.AutoExtendPeriod,
+						"password":         v.AvailableRange.Password,
+						"allowShare":       v.AvailableRange.AllowShare,
+						"shareUsers":       v.AvailableRange.ShareUsers,
+						"authorId":         v.AvailableRange.AuthorId,
 					},
 					"usage": map[string]interface{}{
 						"visitCount": v.Usage.VisitCount,
@@ -1360,6 +1488,7 @@ func (dc *FileController) GetRecentFiles(c *gin.Context) {
 						"hash":         sv.FileInfo.Hash,
 						"width":        sv.FileInfo.Width,
 						"height":       sv.FileInfo.Height,
+						"exif":         sv.FileInfo.Exif,
 					},
 				})
 				break
@@ -1515,12 +1644,13 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 					// 	"name"
 					// },
 					"availableRange": map[string]interface{}{
-						"visitCount":     v.AvailableRange.VisitCount,
-						"expirationTime": v.AvailableRange.ExpirationTime,
-						"password":       v.AvailableRange.Password,
-						"allowShare":     v.AvailableRange.AllowShare,
-						"shareUsers":     v.AvailableRange.ShareUsers,
-						"authorId":       v.AvailableRange.AuthorId,
+						"visitCount":       v.AvailableRange.VisitCount,
+						"expirationTime":   v.AvailableRange.ExpirationTime,
+						"autoExtendPeriod": v.AvailableRange.AutoExtendPeriod,
+						"password":         v.AvailableRange.Password,
+						"allowShare":       v.AvailableRange.AllowShare,
+						"shareUsers":       v.AvailableRange.ShareUsers,
+						"authorId":         v.AvailableRange.AuthorId,
 					},
 					"usage": map[string]interface{}{
 						"visitCount": v.Usage.VisitCount,
@@ -1542,6 +1672,7 @@ func (dc *FileController) GetRecyclebinFiles(c *gin.Context) {
 						"hash":         sv.FileInfo.Hash,
 						"width":        sv.FileInfo.Width,
 						"height":       sv.FileInfo.Height,
+						"exif":         sv.FileInfo.Exif,
 					},
 				})
 				break

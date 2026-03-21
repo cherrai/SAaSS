@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "lib": ["es2015", "dom", "ES2020"],
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    // "outDir": "../../../shiina_aiiko/meow-cloud-sharing/node_modules/saass-js/dist",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "allowJs": false,
+    "declaration": true,
+    // 不允许隐式的 any 类型
+    "removeComments": true,
+    "moduleResolution": "node",
+    "types": [],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["src/webAssembly/go-wasm"]
+}

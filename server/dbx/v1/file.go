@@ -350,6 +350,88 @@ func (fd *FileDbx) SetFileSharing(appId, authorId, path string, fileNames []stri
 	return nil
 }
 
+func (fd *FileDbx) SetFileExpirationTime(appId, authorId, path string, fileNames []string, expirationTime int64) error {
+	parentFolderId, err := folderDbx.GetParentFolderId(appId, path, false, authorId)
+	if err != nil {
+		return err
+	}
+	file := new(models.File)
+
+	updateResult, err := file.GetCollection().UpdateMany(context.TODO(),
+		bson.M{
+			"$and": []bson.M{
+				{
+					"appId": appId,
+				},
+				{
+					"parentFolderId": parentFolderId,
+				},
+				{
+					"fileName": bson.M{
+						"$in": fileNames,
+					},
+				},
+				{
+					"status": 1,
+				},
+			},
+		}, bson.M{
+			"$set": bson.M{
+				"lastlastUpdateTime":            time.Now().Unix(),
+				"availableRange.expirationTime": expirationTime,
+			},
+		}, options.Update().SetUpsert(false))
+
+	if err != nil {
+		return err
+	}
+	if updateResult.ModifiedCount == 0 {
+		return errors.New("update fail")
+	}
+	return nil
+}
+
+func (fd *FileDbx) SetFileAutoExtendPeriod(appId, authorId, path string, fileNames []string, autoExtendPeriod int64) error {
+	parentFolderId, err := folderDbx.GetParentFolderId(appId, path, false, authorId)
+	if err != nil {
+		return err
+	}
+	file := new(models.File)
+
+	updateResult, err := file.GetCollection().UpdateMany(context.TODO(),
+		bson.M{
+			"$and": []bson.M{
+				{
+					"appId": appId,
+				},
+				{
+					"parentFolderId": parentFolderId,
+				},
+				{
+					"fileName": bson.M{
+						"$in": fileNames,
+					},
+				},
+				{
+					"status": 1,
+				},
+			},
+		}, bson.M{
+			"$set": bson.M{
+				"lastlastUpdateTime":              time.Now().Unix(),
+				"availableRange.autoExtendPeriod": autoExtendPeriod,
+			},
+		}, options.Update().SetUpsert(false))
+
+	if err != nil {
+		return err
+	}
+	if updateResult.ModifiedCount == 0 {
+		return errors.New("update fail")
+	}
+	return nil
+}
+
 func (fd *FileDbx) SetFilePassword(appId, authorId, path, fileName, password string) error {
 	parentFolderId, err := folderDbx.GetParentFolderId(appId, path, false, authorId)
 	if err != nil {

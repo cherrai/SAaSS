@@ -1,0 +1,30 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.vscode
+
+# Test binary, built with `go test -c`
+*.test
+**/runtime/*
+!**/runtime/qrcode/bg.jpg
+!**/runtime/fonts
+!*.log
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+**/.idea/
+**/api.log
+**/annotation.conf
+**/cmd
+
+**/.DS_Store
+.DS_Store
+
+node_modules/
+dist/
+tmp/
+
+package-lock.json
+yarn-error.log

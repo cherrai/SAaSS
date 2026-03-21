@@ -40,6 +40,15 @@ func Response() gin.HandlerFunc {
 						if roles.ResponseEncryption {
 							// 当需要加密的时候
 						} else {
+
+							// CFS返回File的时候不管
+							if c.Writer.Written() {
+								if _, isWsServer := c.Get("CFS"); isWsServer {
+									c.Next()
+									return
+								}
+							}
+
 							getResponse, _ := c.Get("body")
 							// log.Info("getResponse", http.StatusOK, getResponse)
 

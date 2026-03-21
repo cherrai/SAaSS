@@ -412,7 +412,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 
 	// 检查文件是否存在
 	file, err := c.FormFile("files")
-	log.Info("file", file.Size)
+	log.Info("file", file.Size, err)
 	if err != nil {
 		res.Code = 10016
 		res.Errors(err)
@@ -433,7 +433,6 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 		res.Call(c)
 		return
 	}
-	// log.Info("fileInfoMap", fileInfoMap["final"], file.Size)
 
 	totalSize, err := conf.Redisdb.Get("file_" + fileConfigInfo.FileInfo.Hash + "_totalsize")
 	if err != nil {
@@ -444,6 +443,7 @@ func (fc *ChunkUploadController) UploadChunk(c *gin.Context) {
 	}
 
 	// 当final等于no的同时size等于0，则不允许
+	log.Info("fileInfoMap", fileInfoMap["final"], file.Size)
 	if fileInfoMap["final"] == "no" && file.Size == 0 {
 		res.Code = 10016
 		res.Error = "There was an error in slicing the uploaded file."

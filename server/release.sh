@@ -104,7 +104,7 @@ stop() {
 backup() {
   # backupTime=$(date +'%Y-%m-%d_%T')
   # zip -q -r ./saass_$backupTime.zip ./static
-  tar cvzf /home/project/static/saass_static.tgz -C $DIR/static .
+  tar cvzf $DIR/saass_static.tgz -C $DIR/static .
 
   # unzip -d ./ build_2023-07-04_21:11:13.zip
 }

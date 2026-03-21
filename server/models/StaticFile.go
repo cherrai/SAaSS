@@ -25,6 +25,7 @@ import (
 //	type ProcessInfo struct {
 //		Hash string `bson:"hash" json:"hash,omitempty"`
 //	}
+
 type FileInfo struct {
 	Name string `bson:"name" json:"name,omitempty"`
 	// 父级文件夹Id

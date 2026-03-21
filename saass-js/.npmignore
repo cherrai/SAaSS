@@ -1,0 +1,8 @@
+src/
+examples/
+test/
+tsconfig.json
+.gitignore
+.npmignore
+tmp/
+yarn-error.log

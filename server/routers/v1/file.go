@@ -90,6 +90,28 @@ func (r Routerv1) InitFile() {
 		fc.SetFileSharing)
 
 	r.Group.POST(
+		role.SetRole("/file/expirationTime/set", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.SetFileExpirationTime)
+
+	r.Group.POST(
+		role.SetRole("/file/autoExtendPeriod/set", &middleware.RoleOptionsType{
+			CheckApp:           true,
+			CheckAppToken:      true,
+			Authorize:          false,
+			RequestEncryption:  false,
+			ResponseEncryption: false,
+			ResponseDataType:   "json",
+		}),
+		fc.SetFileAutoExtendPeriod)
+
+	r.Group.POST(
 		role.SetRole("/file/password/set", &middleware.RoleOptionsType{
 			CheckApp:           true,
 			CheckAppToken:      true,

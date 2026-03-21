@@ -113,6 +113,7 @@ func (fc *CloudServiceFileController) GetFile(c *gin.Context) {
 	deadlineFilePath := fc.GetDeadlineFilePath(appId, path, fileName)
 
 	deadline := int64(0)
+	// log.Warn("GetFile", filePath)
 
 	if nfile.IsExists(deadlineFilePath) {
 		if err := nfile.ReadFile(deadlineFilePath, &deadline); err != nil {
