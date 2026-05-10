@@ -418,7 +418,7 @@ func (dc *DownloadController) Download(c *gin.Context) {
 		return
 	}
 	processFilePath, err := dc.ProcessFile(c, sf.Path+"/"+sf.FileName)
-	// log.Info("processFilePath", processFilePath, err)
+	log.Info("processFilePath", processFilePath, err)
 	if err != nil {
 		c.String(http.StatusNotFound, "")
 		return
